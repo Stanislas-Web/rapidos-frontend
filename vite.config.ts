@@ -19,7 +19,8 @@ export default defineConfig({
   },
   server: {
     port: 5173,
-    open: false, // ✅ Désactivé pour éviter l'erreur xdg-open sur VPS
+    open: false, 
+    host: '0.0.0.0'// ✅ Désactivé pour éviter l'erreur xdg-open sur VPS
   },
   build: {
     outDir: 'dist',
