@@ -1,10 +1,9 @@
-// vite.config.ts
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
 
 export default defineConfig({
-  base: './', 
+  base: './', // Important pour Netlify
   plugins: [react()],
   resolve: {
     alias: {
@@ -24,5 +23,10 @@ export default defineConfig({
   },
   build: {
     outDir: 'dist',
+    rollupOptions: {
+      output: {
+        manualChunks: undefined,
+      },
+    },
   },
-});
+}); 
