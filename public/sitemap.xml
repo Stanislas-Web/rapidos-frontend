@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:xhtml="http://www.w3.org/1999/xhtml">
+  <!-- Page d'accueil -->
+  <url>
+    <loc>https://geniusvente.com/</loc>
+    <lastmod>2025-02-05</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://geniusvente.com/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://geniusvente.com/en"/>
+  </url>
+
+  <!-- Dashboard - FR -->
+  <url>
+    <loc>https://geniusvente.com/dashboard</loc>
+    <lastmod>2025-02-05</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://geniusvente.com/dashboard"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://geniusvente.com/en/dashboard"/>
+  </url>
+
+  <!-- Ventes - FR -->
+  <url>
+    <loc>https://geniusvente.com/dashboard/sales</loc>
+    <lastmod>2025-02-05</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://geniusvente.com/dashboard/sales"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://geniusvente.com/en/dashboard/sales"/>
+  </url>
+
+  <!-- English versions -->
+  <url>
+    <loc>https://geniusvente.com/en</loc>
+    <lastmod>2025-02-05</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+    <xhtml:link rel="alternate" hreflang="en" href="https://geniusvente.com/en"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://geniusvente.com/"/>
+  </url>
+
+  <url>
+    <loc>https://geniusvente.com/en/dashboard</loc>
+    <lastmod>2025-02-05</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+    <xhtml:link rel="alternate" hreflang="en" href="https://geniusvente.com/en/dashboard"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://geniusvente.com/dashboard"/>
+  </url>
+
+  <url>
+    <loc>https://geniusvente.com/en/dashboard/sales</loc>
+    <lastmod>2025-02-05</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+    <xhtml:link rel="alternate" hreflang="en" href="https://geniusvente.com/en/dashboard/sales"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://geniusvente.com/dashboard/sales"/>
+  </url>
+</urlset>

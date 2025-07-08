@@ -1,0 +1,34 @@
+{
+    "applinks": {
+        "apps": [],
+        "details": [
+            {
+                "appID": "B2B76DACUD.com.imm.go",
+                "paths": ["/annonce/*"],
+                "components": [
+                    {
+                        "/": "/annonce/*",
+                        "comment": "Matches any URL whose path starts with /annonce/"
+                    },
+                    {
+                        "#": "no_universal_links",
+                        "exclude": true,
+                        "comment": "Matches any URL with a fragment"
+                    },
+                    {
+                        "?": "*",
+                        "exclude": true,
+                        "comment": "Matches any URL with a query string"
+                    }
+                ],
+                "appIDs": ["B2B76DACUD.com.imm.go"],
+                "defaults": {
+                    "caseSensitive": false
+                }
+            }
+        ]
+    },
+    "webcredentials": {
+        "apps": ["B2B76DACUD.com.imm.go"]
+    }
+}

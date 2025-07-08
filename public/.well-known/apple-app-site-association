@@ -1,0 +1,18 @@
+{
+    "applinks": {
+        "apps": [],
+        "details": [
+            {
+                "appID": "B2B76DACUD.com.imm.go",
+                "paths": ["/annonce/*"],
+                "components": [
+                    {
+                        "/": "/annonce/*",
+                        "comment": "Matches any URL whose path starts with /annonce/"
+                    }
+                ],
+                "appIDs": ["B2B76DACUD.com.imm.go"]
+            }
+        ]
+    }
+}
