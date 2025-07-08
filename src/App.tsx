@@ -10,7 +10,7 @@ import Vendeurs from './pages/admin/Vendeurs';
 import Produits from './pages/admin/Produits';
 import Commandes from './pages/admin/Commandes';
 import Categories from './pages/admin/Categories';
-import Login from './pages/admin/Login';
+import Login from './pages/admin/login';
 
 const App = () => {
   return (
