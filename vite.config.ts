@@ -3,7 +3,7 @@ import react from '@vitejs/plugin-react';
 import path from 'path';
 
 export default defineConfig({
-  base: './', // Important pour Netlify
+  base: './', // Important pour les chemins relatifs (Netlify/VPS)
   plugins: [react()],
   resolve: {
     alias: {
@@ -19,14 +19,14 @@ export default defineConfig({
   },
   server: {
     port: 5173,
-    open: true,
+    open: false, // ✅ Désactivé pour éviter l'erreur xdg-open sur VPS
   },
   build: {
     outDir: 'dist',
     rollupOptions: {
       output: {
-        manualChunks: undefined,
+        manualChunks: undefined, // 🔧 Permet de regrouper les fichiers JS
       },
     },
   },
-}); 
+});
