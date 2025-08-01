@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 
 const Login = () => {
   const navigate = useNavigate();
 
   const [uid, setUid] = useState('+243826016607');
-  const [password, setPassword] = useState('0826016607Makengo?');
+  const [password, setPassword] = useState('0826016607Makengo@');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     const token = localStorage.getItem('authToken');
@@ -18,13 +20,41 @@ const Login = () => {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setError('');
 
-    // ✅ Connexion factice sans API
-    setTimeout(() => {
-      localStorage.setItem('authToken', 'mock-token'); // Stocke un faux token
+    const data = JSON.stringify({
+      "uid": uid,
+      "password": password
+    });
+
+    const config = {
+      method: 'post',
+      maxBodyLength: Infinity,
+      url: 'http://24.144.87.127:3333/login',
+      headers: { 
+        'Content-Type': 'application/json'
+      },
+      data: data
+    };
+
+    try {
+      const response = await axios.request(config);
+      console.log(JSON.stringify(response.data));
+      
+      // Stocker le token de l'API
+      if (response.data.token) {
+        localStorage.setItem('authToken', response.data.token);
+      } else {
+        localStorage.setItem('authToken', 'mock-token'); // Fallback si pas de token
+      }
+      
       setLoading(false);
-      navigate('/dashboard'); // Redirige vers le dashboard
-    }, 500);
+      navigate('/dashboard');
+    } catch (error) {
+      console.log(error);
+      setError('Erreur de connexion. Vérifiez vos identifiants.');
+      setLoading(false);
+    }
   };
 
   return (
@@ -35,7 +65,11 @@ const Login = () => {
       >
         <h2 className="text-2xl font-bold text-center text-gray-800">Connexion Rapidos</h2>
 
-        {/* ❌ Plus de message d'erreur */}
+        {error && (
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+            {error}
+          </div>
+        )}
         
         <input
           type="text"

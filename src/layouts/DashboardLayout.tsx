@@ -24,7 +24,7 @@ const DashboardLayout = () => {
   return (
     <div className="flex">
       {/* Sidebar */}
-      <aside className="w-64 h-screen bg-white shadow-md p-4 flex flex-col justify-between">
+      <aside className="w-64 h-screen bg-white shadow-md p-4 flex flex-col justify-between fixed left-0 top-0 z-50">
         <div>
           {/* Logo */}
           <div className="mb-6">
@@ -63,7 +63,7 @@ const DashboardLayout = () => {
       </aside>
 
       {/* Contenu principal */}
-      <main className="flex-1 p-6 bg-gray-50 min-h-screen">
+      <main className="flex-1 p-6 bg-gray-50 min-h-screen ml-64">
         <Outlet />
       </main>
     </div>
