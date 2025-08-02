@@ -30,7 +30,7 @@ const Login = () => {
     const config = {
       method: 'post',
       maxBodyLength: Infinity,
-      url: 'http://24.144.87.127:3333/login',
+              url: '/api/login',
       headers: { 
         'Content-Type': 'application/json'
       },

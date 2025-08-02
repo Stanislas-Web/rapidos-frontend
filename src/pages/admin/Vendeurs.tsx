@@ -64,7 +64,7 @@ const Vendeurs = () => {
       const config = {
         method: 'get',
         maxBodyLength: Infinity,
-        url: 'http://24.144.87.127:3333/vendeurs',
+        url: '/api/vendeurs',
         headers: { 
           'Authorization': 'Bearer oat_NDM0.b1R4cVlzRWZOMUNPN3FveW5WaGVOZ0paVWpTT1c0SFM0LWZEbjFNNDgzNzMzMjk1Ng'
         },
