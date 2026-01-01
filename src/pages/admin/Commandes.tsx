@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { collection, onSnapshot } from 'firebase/firestore';
-import { db } from '../../firebase/config';
+import api from '../../utils/api';
 import * as XLSX from 'xlsx';
 
 type CartItemType = {
@@ -47,40 +46,70 @@ const Commandes = () => {
   const [selectedCart, setSelectedCart] = useState<CartType | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [showStatsModal, setShowStatsModal] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [limit] = useState(20);
+  const [totalPages, setTotalPages] = useState(1);
+
+  // Récupérer les commandes depuis l'API
+  const fetchCarts = async (page: number = 1, status?: string) => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      // Construire l'URL avec les paramètres
+      let url = `/ecommerce/commandes/admin/all?page=${page}&limit=${limit}`;
+      if (status && status !== 'all') {
+        url += `&status=${status}`;
+      }
+
+      const response = await api.get(url);
+      
+      // Adapter la réponse selon la structure de l'API
+      const data = response.data?.data || response.data?.commandes || response.data || [];
+      const total = response.data?.total || response.data?.meta?.total || data.length;
+      
+      // Convertir les données pour correspondre au type CartType
+      const formattedData = data.map((item: any) => ({
+        id: item.id?.toString() || item.idCommande?.toString(),
+        client: item.client || item.clientName || '',
+        idClient: item.idClient?.toString() || '',
+        phone: item.phone || item.telephone || '',
+        adresse: item.adresse || item.address || '',
+        avenue: item.avenue || '',
+        quartier: item.quartier || '',
+        commune: item.commune || '',
+        ville: item.ville || item.city || '',
+        pays: item.pays || item.country || '',
+        numero: item.numero || '',
+        latitude: item.latitude || 0,
+        longitude: item.longitude || 0,
+        items: item.items || item.products || [],
+        total: item.total || 0,
+        status: item.status || 'pending',
+        timestamp: item.timestamp ? new Date(item.timestamp) : (item.createdAt ? new Date(item.createdAt) : new Date())
+      })) as CartType[];
+
+      setCarts(formattedData);
+      setFilteredCarts(formattedData);
+      setTotalPages(Math.ceil(total / limit));
+      setLoading(false);
+    } catch (error: any) {
+      console.error('Erreur lors du chargement des commandes:', error);
+      setError(error.response?.data?.message || 'Erreur lors du chargement des commandes');
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchCarts = async () => {
-      try {
-        setLoading(true);
-        setError(null);
+    fetchCarts(currentPage, statusFilter);
+  }, [currentPage, statusFilter]);
 
-        // Écouter les changements en temps réel
-        const unsubscribe = onSnapshot(collection(db, 'carts'), (querySnapshot) => {
-          const data = querySnapshot.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data(),
-            timestamp: doc.data().timestamp?.toDate() || new Date()
-          })) as CartType[];
-          
-          setCarts(data);
-          setFilteredCarts(data);
-          setLoading(false);
-        }, (error) => {
-          console.error('Erreur lors de l\'écoute des changements:', error);
-          setError('Erreur lors du chargement des commandes');
-          setLoading(false);
-        });
-
-        return () => unsubscribe();
-      } catch (error) {
-        console.error('Erreur lors du chargement:', error);
-        setError('Erreur lors du chargement des commandes');
-        setLoading(false);
-      }
-    };
-
-    fetchCarts();
-  }, []);
+  // Réinitialiser la page quand le filtre de statut change
+  useEffect(() => {
+    if (statusFilter !== 'all' && currentPage !== 1) {
+      setCurrentPage(1);
+    }
+  }, [statusFilter]);
 
   // Mettre à jour le filtre de période quand les dates personnalisées changent
   useEffect(() => {
@@ -91,15 +120,11 @@ const Commandes = () => {
     }
   }, [startDate, endDate]);
 
-  // Filtrer les commandes basé sur le terme de recherche, le statut et la date
+  // Filtrer les commandes basé sur le terme de recherche et la date (le statut est géré par l'API)
   useEffect(() => {
     let filtered = carts;
 
-    // Filtre par statut
-    if (statusFilter !== 'all') {
-      filtered = filtered.filter(cart => cart.status === statusFilter);
-    }
-
+    // Le filtre par statut est géré par l'API, on ne filtre que côté client pour la recherche et les dates
     // Filtre par date (priorité aux dates personnalisées)
     if (startDate || endDate) {
       // Filtre par dates personnalisées
@@ -612,6 +637,78 @@ const Commandes = () => {
             </tbody>
           </table>
         </div>
+        
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
+            <div className="flex-1 flex justify-between sm:hidden">
+              <button
+                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                disabled={currentPage === 1}
+                className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Précédent
+              </button>
+              <button
+                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                disabled={currentPage === totalPages}
+                className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Suivant
+              </button>
+            </div>
+            <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+              <div>
+                <p className="text-sm text-gray-700">
+                  Page <span className="font-medium">{currentPage}</span> sur <span className="font-medium">{totalPages}</span>
+                </p>
+              </div>
+              <div>
+                <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                  <button
+                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                    disabled={currentPage === 1}
+                    className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Précédent
+                  </button>
+                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                    let pageNum;
+                    if (totalPages <= 5) {
+                      pageNum = i + 1;
+                    } else if (currentPage <= 3) {
+                      pageNum = i + 1;
+                    } else if (currentPage >= totalPages - 2) {
+                      pageNum = totalPages - 4 + i;
+                    } else {
+                      pageNum = currentPage - 2 + i;
+                    }
+                    return (
+                      <button
+                        key={pageNum}
+                        onClick={() => setCurrentPage(pageNum)}
+                        className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
+                          currentPage === pageNum
+                            ? 'z-10 bg-indigo-50 border-indigo-500 text-indigo-600'
+                            : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
+                        }`}
+                      >
+                        {pageNum}
+                      </button>
+                    );
+                  })}
+                  <button
+                    onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                    disabled={currentPage === totalPages}
+                    className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Suivant
+                  </button>
+                </nav>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Modal de détails */}

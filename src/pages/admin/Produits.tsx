@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../../utils/api';
 
 type ProductType = {
   id: number;
@@ -67,18 +67,8 @@ const Produits = () => {
       setLoading(true);
       setError('');
 
-      const config = {
-        method: 'get',
-        maxBodyLength: Infinity,
-        url: '/api/vendeurs',
-        headers: { 
-          'Authorization': 'Bearer oat_NDM0.b1R4cVlzRWZOMUNPN3FveW5WaGVOZ0paVWpTT1c0SFM0LWZEbjFNNDgzNzMzMjk1Ng'
-        },
-        data: ''
-      };
-
       try {
-        const response = await axios.request(config);
+        const response = await api.get('/vendeurs');
         console.log(JSON.stringify(response.data));
         setVendeurs(response.data.vendeurWITHProduct || []);
         

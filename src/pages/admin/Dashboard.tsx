@@ -5,7 +5,7 @@ import {
 } from 'recharts';
 import { collection, onSnapshot, orderBy, limit, query } from 'firebase/firestore';
 import { db } from '../../firebase/config';
-import axios from 'axios';
+import api from '../../utils/api';
 import StartCard from '../../components/admin/StartCard';
 
 type CartType = {
@@ -265,17 +265,7 @@ const Dashboard = () => {
   const fetchProductsCount = async () => {
     try {
       setProductsLoading(true);
-      const config = {
-        method: 'get',
-        maxBodyLength: Infinity,
-        url: '/api/vendeurs',
-        headers: { 
-          'Authorization': 'Bearer oat_NDM0.b1R4cVlzRWZOMUNPN3FveW5WaGVOZ0paVWpTT1c0SFM0LWZEbjFNNDgzNzMzMjk1Ng'
-        },
-        data: ''
-      };
-
-      const response = await axios.request(config);
+      const response = await api.get('/vendeurs');
       console.log('Réponse API produits:', response.data);
       const vendeursData = response.data.vendeurWITHProduct || [];
       
@@ -334,17 +324,7 @@ const Dashboard = () => {
   const fetchVendeursCount = async () => {
     try {
       setVendeursLoading(true);
-      const config = {
-        method: 'get',
-        maxBodyLength: Infinity,
-        url: '/api/vendeurs',
-        headers: { 
-          'Authorization': 'Bearer oat_NDM0.b1R4cVlzRWZOMUNPN3FveW5WaGVOZ0paVWpTT1c0SFM0LWZEbjFNNDgzNzMzMjk1Ng'
-        },
-        data: ''
-      };
-
-      const response = await axios.request(config);
+      const response = await api.get('/vendeurs');
       console.log('Réponse API vendeurs:', response.data);
       const vendeursData = response.data.vendeurWITHProduct || [];
       

@@ -16,6 +16,7 @@ const links = [
 const DashboardLayout = () => {
   const location = useLocation();
 
+  // Pas besoin de vérifier le token ici, ProtectedRoute le fait déjà
   const handleLogout = () => {
     localStorage.removeItem('authToken'); // ✅ cohérence avec useAuth
     window.location.href = '/login'; // ✅ évite clignotement

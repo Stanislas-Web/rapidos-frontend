@@ -1,6 +1,10 @@
 {
     "rewrites": [
       {
+        "source": "/api/:path*",
+        "destination": "http://24.144.87.127:3333/:path*"
+      },
+      {
         "source": "/.well-known/apple-app-site-association",
         "destination": "/apple-app-site-association"
       },

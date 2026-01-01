@@ -30,7 +30,7 @@ const Login = () => {
     const config = {
       method: 'post',
       maxBodyLength: Infinity,
-              url: '/api/login',
+      url: 'http://24.144.87.127:3333/login',
       headers: { 
         'Content-Type': 'application/json'
       },
@@ -39,20 +39,21 @@ const Login = () => {
 
     try {
       const response = await axios.request(config);
-      console.log(JSON.stringify(response.data));
       
-      // Stocker le token de l'API
-      if (response.data.token) {
-        localStorage.setItem('authToken', response.data.token);
+      // Extraire le token depuis la structure: response.data.token.token
+      const token = response.data?.token?.token || response.data?.token;
+      
+      if (token && typeof token === 'string' && token.trim() !== '') {
+        localStorage.setItem('authToken', token);
+        setLoading(false);
+        // Utiliser window.location pour forcer un rechargement complet
+        window.location.href = '/dashboard';
       } else {
-        localStorage.setItem('authToken', 'mock-token'); // Fallback si pas de token
+        setError('Token non reçu. Vérifiez la réponse du serveur.');
+        setLoading(false);
       }
-      
-      setLoading(false);
-      navigate('/dashboard');
-    } catch (error) {
-      console.log(error);
-      setError('Erreur de connexion. Vérifiez vos identifiants.');
+    } catch (error: any) {
+      setError(error.response?.data?.message || 'Erreur de connexion. Vérifiez vos identifiants.');
       setLoading(false);
     }
   };
