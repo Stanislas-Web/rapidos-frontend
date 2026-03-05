@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../../utils/api';
+import { Package, BoxIcon, AlertTriangle, XCircle, Search, X, Eye, Store, Calendar, Hash, DollarSign, AlertCircle, Image, Settings, User, Mail, Phone, Edit3, Trash2 } from 'lucide-react';
 
 type ProductType = {
   id: number;
@@ -127,9 +128,9 @@ const Produits = () => {
   };
 
   const getStockStatus = (stock: number) => {
-    if (stock === 0) return { text: 'Rupture', class: 'bg-red-100 text-red-800' };
-    if (stock <= 10) return { text: 'Faible', class: 'bg-yellow-100 text-yellow-800' };
-    return { text: 'En stock', class: 'bg-green-100 text-green-800' };
+    if (stock === 0) return { text: 'Rupture', class: 'bg-red-50 text-red-700 border border-red-200' };
+    if (stock <= 10) return { text: 'Faible', class: 'bg-amber-50 text-amber-700 border border-amber-200' };
+    return { text: 'En stock', class: 'bg-emerald-50 text-emerald-700 border border-emerald-200' };
   };
 
   const openModal = (product: ProductType) => {
@@ -143,155 +144,218 @@ const Produits = () => {
   };
 
   return (
-    <div className="space-y-6 p-4">
-      <h1 className="text-2xl font-bold text-gray-800">Gestion des Produits</h1>
+    <div className="space-y-6 p-4 md:p-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-3">
+            <div className="p-2 bg-emerald-100 rounded-xl">
+              <Package className="w-6 h-6 text-emerald-600" />
+            </div>
+            Gestion des Produits
+          </h1>
+          <p className="text-sm text-gray-500 mt-1 ml-14">Catalogue complet des produits</p>
+        </div>
+        {!loading && !error && (
+          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 text-emerald-700 text-sm font-medium rounded-full border border-emerald-200">
+            <Package className="w-4 h-4" />
+            {allProducts.length} produit{allProducts.length > 1 ? 's' : ''}
+          </span>
+        )}
+      </div>
 
       {loading ? (
-        <div className="flex items-center justify-center p-8">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
-          <span className="ml-2 text-gray-600">Chargement des produits...</span>
+        <div className="flex flex-col items-center justify-center p-16 bg-white rounded-2xl border border-gray-100 shadow-sm">
+          <div className="animate-spin rounded-full h-10 w-10 border-[3px] border-emerald-200 border-t-emerald-600"></div>
+          <span className="mt-4 text-gray-500 font-medium">Chargement des produits...</span>
         </div>
       ) : error ? (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
-          {error}
+        <div className="flex items-center gap-3 bg-red-50 border border-red-200 text-red-700 px-5 py-4 rounded-2xl">
+          <AlertCircle className="w-5 h-5 flex-shrink-0" />
+          <span className="font-medium">{error}</span>
         </div>
       ) : (
         <div className="space-y-6">
           {/* Statistiques */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="bg-white p-4 rounded-lg border shadow-sm">
-              <h3 className="text-lg font-semibold text-gray-700">Total Produits</h3>
-              <p className="text-2xl font-bold text-indigo-600">{filteredProducts.length}</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="relative overflow-hidden bg-white p-5 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow duration-300">
+              <div className="absolute -top-3 -right-3 w-16 h-16 bg-emerald-50 rounded-full" />
+              <div className="relative flex items-center gap-4">
+                <div className="w-11 h-11 bg-emerald-50 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <Package className="w-5 h-5 text-emerald-600" />
+                </div>
+                <div>
+                  <p className="text-xs font-medium text-gray-400 uppercase tracking-wider">Total Produits</p>
+                  <p className="text-2xl font-extrabold text-gray-900 mt-0.5">{filteredProducts.length}</p>
+                </div>
+              </div>
             </div>
-            <div className="bg-white p-4 rounded-lg border shadow-sm">
-              <h3 className="text-lg font-semibold text-gray-700">En Stock</h3>
-              <p className="text-2xl font-bold text-green-600">
-                {filteredProducts.filter(p => p.stock > 10).length}
-              </p>
+            <div className="relative overflow-hidden bg-white p-5 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow duration-300">
+              <div className="absolute -top-3 -right-3 w-16 h-16 bg-blue-50 rounded-full" />
+              <div className="relative flex items-center gap-4">
+                <div className="w-11 h-11 bg-blue-50 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <BoxIcon className="w-5 h-5 text-blue-600" />
+                </div>
+                <div>
+                  <p className="text-xs font-medium text-gray-400 uppercase tracking-wider">En Stock</p>
+                  <p className="text-2xl font-extrabold text-gray-900 mt-0.5">
+                    {filteredProducts.filter(p => p.stock > 10).length}
+                  </p>
+                </div>
+              </div>
             </div>
-            <div className="bg-white p-4 rounded-lg border shadow-sm">
-              <h3 className="text-lg font-semibold text-gray-700">Stock Faible</h3>
-              <p className="text-2xl font-bold text-yellow-600">
-                {filteredProducts.filter(p => p.stock > 0 && p.stock <= 10).length}
-              </p>
+            <div className="relative overflow-hidden bg-white p-5 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow duration-300">
+              <div className="absolute -top-3 -right-3 w-16 h-16 bg-amber-50 rounded-full" />
+              <div className="relative flex items-center gap-4">
+                <div className="w-11 h-11 bg-amber-50 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <AlertTriangle className="w-5 h-5 text-amber-600" />
+                </div>
+                <div>
+                  <p className="text-xs font-medium text-gray-400 uppercase tracking-wider">Stock Faible</p>
+                  <p className="text-2xl font-extrabold text-gray-900 mt-0.5">
+                    {filteredProducts.filter(p => p.stock > 0 && p.stock <= 10).length}
+                  </p>
+                </div>
+              </div>
             </div>
-            <div className="bg-white p-4 rounded-lg border shadow-sm">
-              <h3 className="text-lg font-semibold text-gray-700">Rupture</h3>
-              <p className="text-2xl font-bold text-red-600">
-                {filteredProducts.filter(p => p.stock === 0).length}
-              </p>
+            <div className="relative overflow-hidden bg-white p-5 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow duration-300">
+              <div className="absolute -top-3 -right-3 w-16 h-16 bg-red-50 rounded-full" />
+              <div className="relative flex items-center gap-4">
+                <div className="w-11 h-11 bg-red-50 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <XCircle className="w-5 h-5 text-red-600" />
+                </div>
+                <div>
+                  <p className="text-xs font-medium text-gray-400 uppercase tracking-wider">Rupture</p>
+                  <p className="text-2xl font-extrabold text-gray-900 mt-0.5">
+                    {filteredProducts.filter(p => p.stock === 0).length}
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
 
           {/* Barre de recherche */}
-          <div className="bg-white p-4 rounded-lg border shadow-sm">
+          <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm">
             <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
+              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                <Search className="h-5 w-5 text-gray-400" />
               </div>
               <input
                 type="text"
                 placeholder="Rechercher par nom, description, prix, stock, vendeur..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
+                className="block w-full pl-12 pr-10 py-3 border border-gray-200 rounded-xl leading-5 bg-gray-50 placeholder-gray-400 focus:outline-none focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
               />
+              {searchTerm && (
+                <button
+                  onClick={() => setSearchTerm('')}
+                  className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              )}
             </div>
             {searchTerm && (
-              <div className="mt-2 text-sm text-gray-600">
+              <div className="mt-2 text-sm text-gray-500 flex items-center gap-1.5 pl-1">
+                <Search className="w-3.5 h-3.5" />
                 {filteredProducts.length} produit(s) trouvé(s)
               </div>
             )}
           </div>
 
           {/* Tableau de produits */}
-          <div className="bg-white rounded-lg border shadow-sm overflow-hidden">
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
             <div className="overflow-x-auto">
               <table className="min-w-full">
-                <thead className="bg-gray-50 text-gray-700">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <thead>
+                  <tr className="bg-gray-50/80 border-b border-gray-100">
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
                       Produit
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
                       Vendeur
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
                       Prix
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
                       Stock
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
                       Statut
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
                       Date
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
                       Détails
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="divide-y divide-gray-50">
                   {filteredProducts.length > 0 ? (
                     filteredProducts.map((product) => {
                       const stockStatus = getStockStatus(product.stock);
                       return (
-                        <tr key={product.id} className="hover:bg-gray-50">
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="flex items-center">
-                              {product.media && (
+                        <tr key={product.id} className="hover:bg-gray-50/50 transition-colors duration-150">
+                          <td className="px-6 py-4">
+                            <div className="flex items-center gap-3">
+                              {product.media ? (
                                 <img 
                                   src={product.media.mediaUrl} 
                                   alt={product.name}
-                                  className="w-10 h-10 rounded object-cover mr-3"
+                                  className="w-11 h-11 rounded-xl object-cover border border-gray-100 flex-shrink-0"
                                   onError={(e) => {
                                     e.currentTarget.style.display = 'none';
+                                    e.currentTarget.nextElementSibling?.classList.remove('hidden');
                                   }}
                                 />
-                              )}
-                              <div>
-                                <div className="text-sm font-medium text-gray-900">{product.name}</div>
-                                <div className="text-sm text-gray-500">{product.description}</div>
+                              ) : null}
+                              <div className={`w-11 h-11 bg-emerald-50 rounded-xl flex items-center justify-center flex-shrink-0 ${product.media ? 'hidden' : ''}`}>
+                                <Package className="w-5 h-5 text-emerald-500" />
+                              </div>
+                              <div className="min-w-0">
+                                <div className="text-sm font-semibold text-gray-800 truncate">{product.name}</div>
+                                <div className="text-xs text-gray-400 truncate max-w-[200px]">{product.description}</div>
                               </div>
                             </div>
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
+                          <td className="px-6 py-4">
                             <div>
-                              <div className="text-sm font-medium text-gray-900">{product.vendeurName}</div>
-                              <div className="text-sm text-gray-500">{product.vendeurEmail}</div>
-                              <div className="text-sm text-gray-500">{product.vendeurPhone}</div>
+                              <div className="text-sm font-medium text-gray-800">{product.vendeurName}</div>
+                              <div className="text-xs text-gray-400 flex items-center gap-1 mt-0.5">
+                                <Mail className="w-3 h-3" />
+                                {product.vendeurEmail}
+                              </div>
                             </div>
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm font-bold text-green-600">
+                          <td className="px-6 py-4">
+                            <div className="text-sm font-bold text-emerald-600">
                               {formatPrice(product.price)}
                             </div>
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm text-gray-900">{product.stock}</div>
+                          <td className="px-6 py-4">
+                            <div className="text-sm font-semibold text-gray-700">{product.stock}</div>
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span className={`px-2 py-1 text-xs font-medium rounded-full ${stockStatus.class}`}>
+                          <td className="px-6 py-4">
+                            <span className={`inline-flex items-center px-2.5 py-1 text-xs font-semibold rounded-full ${stockStatus.class}`}>
                               {stockStatus.text}
                             </span>
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {formatDate(product.createdAt)}
+                          <td className="px-6 py-4">
+                            <span className="text-sm text-gray-400 flex items-center gap-1.5">
+                              <Calendar className="w-3.5 h-3.5" />
+                              {formatDate(product.createdAt)}
+                            </span>
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
+                          <td className="px-6 py-4">
                             <button
-                              className="text-indigo-600 hover:text-indigo-900 transition-colors"
+                              className="p-2 rounded-xl text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 transition-all duration-200"
                               onClick={() => openModal(product)}
                               title="Voir les détails"
                             >
-                              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                              </svg>
+                              <Eye className="w-5 h-5" />
                             </button>
                           </td>
                         </tr>
@@ -299,8 +363,13 @@ const Produits = () => {
                     })
                   ) : (
                     <tr>
-                      <td colSpan={7} className="px-6 py-4 text-center text-gray-500">
-                        {searchTerm ? 'Aucun produit trouvé' : 'Aucun produit disponible'}
+                      <td colSpan={7} className="px-6 py-12 text-center">
+                        <div className="w-14 h-14 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                          <Search className="w-6 h-6 text-gray-400" />
+                        </div>
+                        <p className="text-sm font-medium text-gray-500">
+                          {searchTerm ? 'Aucun produit trouvé' : 'Aucun produit disponible'}
+                        </p>
                       </td>
                     </tr>
                   )}
@@ -313,33 +382,43 @@ const Produits = () => {
 
       {/* Modal de détails */}
       {showModal && selectedProduct && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-10 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white max-h-[90vh] overflow-y-auto">
-            <div className="mt-3">
-              {/* En-tête du modal */}
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-gray-900">
-                  Détails du produit
-                </h3>
-                <button
-                  onClick={closeModal}
-                  className="text-gray-400 hover:text-gray-600"
-                >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm overflow-y-auto h-full w-full z-50 flex items-start justify-center pt-10 pb-10">
+          <div className="relative w-11/12 md:w-3/4 lg:w-1/2 bg-white rounded-2xl shadow-2xl max-h-[90vh] flex flex-col">
+            {/* En-tête du modal - sticky */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 flex-shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-emerald-50 rounded-xl">
+                  <Package className="w-5 h-5 text-emerald-600" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-gray-800">Détails du produit</h3>
+                  <p className="text-xs text-gray-400 font-mono">#{selectedProduct.id}</p>
+                </div>
               </div>
+              <button
+                onClick={closeModal}
+                className="p-2 rounded-xl hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-all"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
 
+            {/* Contenu scrollable */}
+            <div className="overflow-y-auto p-6 space-y-6 flex-1">
               {/* Image du produit */}
               {selectedProduct.media && (
-                <div className="mb-6">
-                  <h4 className="font-medium text-gray-700 mb-2">🖼️ Image du produit</h4>
-                  <div className="flex justify-center">
+                <div>
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="p-1.5 bg-violet-50 rounded-lg">
+                      <Image className="w-4 h-4 text-violet-600" />
+                    </div>
+                    <h4 className="font-semibold text-gray-700 text-sm">Image du produit</h4>
+                  </div>
+                  <div className="flex justify-center bg-gray-50 rounded-xl p-4 border border-gray-100">
                     <img 
                       src={selectedProduct.media.mediaUrl} 
                       alt={selectedProduct.name}
-                      className="max-w-full h-64 object-contain rounded-lg border"
+                      className="max-w-full h-64 object-contain rounded-lg"
                       onError={(e) => {
                         e.currentTarget.style.display = 'none';
                       }}
@@ -349,101 +428,118 @@ const Produits = () => {
               )}
 
               {/* Informations du produit */}
-              <div className="mb-6">
-                <h4 className="font-medium text-gray-700 mb-2">📦 Informations du produit</h4>
-                <div className="bg-gray-50 p-4 rounded-lg">
+              <div>
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="p-1.5 bg-emerald-50 rounded-lg">
+                    <Package className="w-4 h-4 text-emerald-600" />
+                  </div>
+                  <h4 className="font-semibold text-gray-700 text-sm">Informations du produit</h4>
+                </div>
+                <div className="bg-gray-50 p-5 rounded-xl border border-gray-100">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <p className="text-sm text-gray-600">Nom</p>
-                      <p className="font-medium">{selectedProduct.name}</p>
+                      <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-1">Nom</p>
+                      <p className="font-semibold text-gray-800">{selectedProduct.name}</p>
                     </div>
                     <div>
-                      <p className="text-sm text-gray-600">Prix</p>
-                      <p className="font-medium text-green-600">{formatPrice(selectedProduct.price)}</p>
+                      <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-1">Prix</p>
+                      <p className="font-bold text-emerald-600 text-lg">{formatPrice(selectedProduct.price)}</p>
                     </div>
                     <div>
-                      <p className="text-sm text-gray-600">Stock</p>
-                      <p className="font-medium">{selectedProduct.stock} unités</p>
+                      <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-1">Stock</p>
+                      <p className="font-semibold text-gray-800">{selectedProduct.stock} unités</p>
                     </div>
                     <div>
-                      <p className="text-sm text-gray-600">Statut</p>
-                      <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStockStatus(selectedProduct.stock).class}`}>
+                      <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-1">Statut</p>
+                      <span className={`inline-flex items-center px-2.5 py-1 text-xs font-semibold rounded-full ${getStockStatus(selectedProduct.stock).class}`}>
                         {getStockStatus(selectedProduct.stock).text}
                       </span>
                     </div>
                     <div className="md:col-span-2">
-                      <p className="text-sm text-gray-600">Description</p>
-                      <p className="font-medium">{selectedProduct.description}</p>
+                      <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-1">Description</p>
+                      <p className="text-gray-700 text-sm leading-relaxed">{selectedProduct.description}</p>
                     </div>
                   </div>
                 </div>
               </div>
 
               {/* Informations du vendeur */}
-              <div className="mb-6">
-                <h4 className="font-medium text-gray-700 mb-2">👤 Informations du vendeur</h4>
-                <div className="bg-gray-50 p-4 rounded-lg">
+              <div>
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="p-1.5 bg-blue-50 rounded-lg">
+                    <Store className="w-4 h-4 text-blue-600" />
+                  </div>
+                  <h4 className="font-semibold text-gray-700 text-sm">Informations du vendeur</h4>
+                </div>
+                <div className="bg-gray-50 p-5 rounded-xl border border-gray-100">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <p className="text-sm text-gray-600">Nom</p>
-                      <p className="font-medium">{selectedProduct.vendeurName}</p>
+                      <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-1 flex items-center gap-1"><User className="w-3 h-3" /> Nom</p>
+                      <p className="font-semibold text-gray-800">{selectedProduct.vendeurName}</p>
                     </div>
                     <div>
-                      <p className="text-sm text-gray-600">Email</p>
-                      <p className="font-medium">{selectedProduct.vendeurEmail}</p>
+                      <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-1 flex items-center gap-1"><Mail className="w-3 h-3" /> Email</p>
+                      <p className="font-medium text-gray-700 text-sm">{selectedProduct.vendeurEmail}</p>
                     </div>
                     <div>
-                      <p className="text-sm text-gray-600">Téléphone</p>
-                      <p className="font-medium">{selectedProduct.vendeurPhone}</p>
+                      <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-1 flex items-center gap-1"><Phone className="w-3 h-3" /> Téléphone</p>
+                      <p className="font-medium text-gray-700">{selectedProduct.vendeurPhone}</p>
                     </div>
                     <div>
-                      <p className="text-sm text-gray-600">ID Vendeur</p>
-                      <p className="font-medium">{selectedProduct.vendeurId}</p>
+                      <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-1 flex items-center gap-1"><Hash className="w-3 h-3" /> ID Vendeur</p>
+                      <p className="font-mono text-sm text-gray-700">{selectedProduct.vendeurId}</p>
                     </div>
                   </div>
                 </div>
               </div>
 
               {/* Informations techniques */}
-              <div className="mb-6">
-                <h4 className="font-medium text-gray-700 mb-2">🔧 Informations techniques</h4>
-                <div className="bg-gray-50 p-4 rounded-lg">
+              <div>
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="p-1.5 bg-amber-50 rounded-lg">
+                    <Settings className="w-4 h-4 text-amber-600" />
+                  </div>
+                  <h4 className="font-semibold text-gray-700 text-sm">Informations techniques</h4>
+                </div>
+                <div className="bg-gray-50 p-5 rounded-xl border border-gray-100">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <p className="text-sm text-gray-600">ID Produit</p>
-                      <p className="font-medium">{selectedProduct.id}</p>
+                      <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-1">ID Produit</p>
+                      <p className="font-mono text-sm text-gray-700">{selectedProduct.id}</p>
                     </div>
                     <div>
-                      <p className="text-sm text-gray-600">Catégorie ID</p>
-                      <p className="font-medium">{selectedProduct.categorieId}</p>
+                      <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-1">Catégorie ID</p>
+                      <p className="font-mono text-sm text-gray-700">{selectedProduct.categorieId}</p>
                     </div>
                     <div>
-                      <p className="text-sm text-gray-600">Date de création</p>
-                      <p className="font-medium">{formatDate(selectedProduct.createdAt)}</p>
+                      <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-1 flex items-center gap-1"><Calendar className="w-3 h-3" /> Date de création</p>
+                      <p className="font-medium text-gray-700">{formatDate(selectedProduct.createdAt)}</p>
                     </div>
                     <div>
-                      <p className="text-sm text-gray-600">Dernière mise à jour</p>
-                      <p className="font-medium">{formatDate(selectedProduct.updatedAt)}</p>
+                      <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-1 flex items-center gap-1"><Calendar className="w-3 h-3" /> Dernière mise à jour</p>
+                      <p className="font-medium text-gray-700">{formatDate(selectedProduct.updatedAt)}</p>
                     </div>
                   </div>
                 </div>
               </div>
+            </div>
 
-              {/* Actions */}
-              <div className="flex items-center justify-end space-x-2 pt-4 border-t">
-                <button 
-                  onClick={closeModal}
-                  className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 transition"
-                >
-                  Fermer
-                </button>
-                <button className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition">
-                  Modifier
-                </button>
-                <button className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition">
-                  Supprimer
-                </button>
-              </div>
+            {/* Actions - sticky footer */}
+            <div className="flex items-center justify-end gap-2 px-6 py-4 border-t border-gray-100 flex-shrink-0 bg-gray-50/50">
+              <button 
+                onClick={closeModal}
+                className="px-4 py-2.5 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-colors font-medium text-sm"
+              >
+                Fermer
+              </button>
+              <button className="inline-flex items-center gap-2 px-4 py-2.5 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-colors font-medium text-sm shadow-sm">
+                <Edit3 className="w-4 h-4" />
+                Modifier
+              </button>
+              <button className="inline-flex items-center gap-2 px-4 py-2.5 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-colors font-medium text-sm shadow-sm">
+                <Trash2 className="w-4 h-4" />
+                Supprimer
+              </button>
             </div>
           </div>
         </div>

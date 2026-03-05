@@ -1,6 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { collection, onSnapshot } from 'firebase/firestore';
 import { db } from '../../firebase/config';
+import {
+  Users, ShoppingCart, DollarSign, Search, X, Eye,
+  Phone, MapPin, Hash, Calendar, Mail, ChevronRight,
+  UserCircle, AlertCircle
+} from 'lucide-react';
 
 type CartItemType = {
   id: number;
@@ -177,164 +182,202 @@ const Clients = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center p-8">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
-        <span className="ml-2 text-gray-600">Chargement des clients...</span>
+      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
+        <div className="relative">
+          <div className="animate-spin rounded-full h-12 w-12 border-[3px] border-gray-200 border-t-emerald-600"></div>
+        </div>
+        <p className="text-sm text-gray-400 font-medium">Chargement des clients...</p>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
-        {error}
+      <div className="flex items-center gap-3 bg-red-50 border border-red-200 text-red-700 px-5 py-4 rounded-xl m-4">
+        <AlertCircle className="w-5 h-5 flex-shrink-0" />
+        <span className="text-sm font-medium">{error}</span>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6 p-4">
-      <h1 className="text-2xl font-bold text-gray-800">Gestion des Clients</h1>
+    <div className="space-y-6 p-4 md:p-6 max-w-7xl mx-auto">
+      {/* En-tête */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-extrabold text-gray-900 tracking-tight">Clients</h1>
+          <p className="text-sm text-gray-400 mt-0.5">Gérez et suivez vos clients en temps réel</p>
+        </div>
+        <div className="flex items-center gap-2 bg-emerald-50 text-emerald-700 px-4 py-2 rounded-xl text-sm font-semibold">
+          <Users className="w-4 h-4" />
+          {filteredClients.length} client{filteredClients.length > 1 ? 's' : ''}
+        </div>
+      </div>
 
       {/* Statistiques */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-white p-4 rounded-lg border shadow-sm">
-          <h3 className="text-sm font-medium text-gray-600">Total Clients</h3>
-          <p className="text-2xl font-bold text-indigo-600">{filteredClients.length}</p>
+        <div className="relative overflow-hidden bg-white p-5 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow duration-300">
+          <div className="absolute -top-3 -right-3 w-16 h-16 bg-emerald-50 rounded-full" />
+          <div className="relative flex items-center gap-4">
+            <div className="w-11 h-11 bg-emerald-50 rounded-xl flex items-center justify-center flex-shrink-0">
+              <Users className="w-5 h-5 text-emerald-600" />
+            </div>
+            <div>
+              <p className="text-xs font-medium text-gray-400 uppercase tracking-wider">Total Clients</p>
+              <p className="text-2xl font-extrabold text-gray-900 mt-0.5">{filteredClients.length}</p>
+            </div>
+          </div>
         </div>
-        <div className="bg-white p-4 rounded-lg border shadow-sm">
-          <h3 className="text-sm font-medium text-gray-600">Total Commandes</h3>
-          <p className="text-2xl font-bold text-green-600">
-            {filteredClients.reduce((total, client) => total + client.nombreCommandes, 0)}
-          </p>
+
+        <div className="relative overflow-hidden bg-white p-5 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow duration-300">
+          <div className="absolute -top-3 -right-3 w-16 h-16 bg-blue-50 rounded-full" />
+          <div className="relative flex items-center gap-4">
+            <div className="w-11 h-11 bg-blue-50 rounded-xl flex items-center justify-center flex-shrink-0">
+              <ShoppingCart className="w-5 h-5 text-blue-600" />
+            </div>
+            <div>
+              <p className="text-xs font-medium text-gray-400 uppercase tracking-wider">Total Commandes</p>
+              <p className="text-2xl font-extrabold text-gray-900 mt-0.5">
+                {filteredClients.reduce((total, client) => total + client.nombreCommandes, 0)}
+              </p>
+            </div>
+          </div>
         </div>
-        <div className="bg-white p-4 rounded-lg border shadow-sm">
-          <h3 className="text-sm font-medium text-gray-600">Chiffre d'affaires</h3>
-          <p className="text-2xl font-bold text-blue-600">
-            {formatPrice(filteredClients.reduce((total, client) => total + client.totalDepense, 0))}
-          </p>
+
+        <div className="relative overflow-hidden bg-white p-5 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow duration-300">
+          <div className="absolute -top-3 -right-3 w-16 h-16 bg-amber-50 rounded-full" />
+          <div className="relative flex items-center gap-4">
+            <div className="w-11 h-11 bg-amber-50 rounded-xl flex items-center justify-center flex-shrink-0">
+              <DollarSign className="w-5 h-5 text-amber-600" />
+            </div>
+            <div>
+              <p className="text-xs font-medium text-gray-400 uppercase tracking-wider">Chiffre d'affaires</p>
+              <p className="text-xl font-extrabold text-gray-900 mt-0.5">
+                {formatPrice(filteredClients.reduce((total, client) => total + client.totalDepense, 0))}
+              </p>
+            </div>
+          </div>
         </div>
       </div>
 
       {/* Barre de recherche */}
-      <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-gray-800">Recherche de clients</h3>
-            {searchTerm && (
-              <button
-                onClick={() => setSearchTerm('')}
-                className="text-sm text-indigo-600 hover:text-indigo-800 font-medium flex items-center space-x-2 transition-colors"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-                <span>Effacer la recherche</span>
-              </button>
-            )}
-          </div>
-
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+        <div className="p-4 md:p-5">
           <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-              <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-            </div>
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
             <input
               type="text"
               placeholder="Rechercher par nom, téléphone, ville, commune..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="block w-full pl-12 pr-4 py-3 border border-gray-200 rounded-lg leading-5 bg-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200"
+              className="block w-full pl-11 pr-10 py-3 border border-gray-200 rounded-xl text-sm bg-gray-50/50 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-400 focus:bg-white transition-all duration-200"
             />
             {searchTerm && (
               <button
                 onClick={() => setSearchTerm('')}
-                className="absolute inset-y-0 right-0 pr-4 flex items-center"
+                className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-lg hover:bg-gray-100 transition-colors"
               >
-                <svg className="h-5 w-5 text-gray-400 hover:text-gray-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
+                <X className="w-4 h-4 text-gray-400" />
               </button>
             )}
           </div>
-
           {searchTerm && (
-            <div className="flex items-center space-x-2 text-sm text-gray-600">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <span>{filteredClients.length} client(s) trouvé(s)</span>
-            </div>
+            <p className="mt-2.5 text-xs text-gray-400 pl-1">
+              {filteredClients.length} résultat{filteredClients.length > 1 ? 's' : ''} pour "<span className="font-semibold text-gray-600">{searchTerm}</span>"
+            </p>
           )}
         </div>
-      </div>
 
       {/* Tableau des clients */}
-      <div className="bg-white rounded-lg border shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="min-w-full">
-            <thead className="bg-gray-50 text-gray-700">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            <thead>
+              <tr className="bg-gray-50/80 border-y border-gray-100">
+                <th className="px-6 py-3.5 text-left text-[11px] font-semibold text-gray-500 uppercase tracking-wider">
                   Client
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3.5 text-left text-[11px] font-semibold text-gray-500 uppercase tracking-wider">
                   Contact
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3.5 text-left text-[11px] font-semibold text-gray-500 uppercase tracking-wider">
                   Localisation
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Statistiques
+                <th className="px-6 py-3.5 text-left text-[11px] font-semibold text-gray-500 uppercase tracking-wider">
+                  Activité
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3.5 text-left text-[11px] font-semibold text-gray-500 uppercase tracking-wider">
                   Actions
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className="divide-y divide-gray-50">
               {filteredClients.length > 0 ? (
                 filteredClients.map((client) => (
-                  <tr key={client.id} className="hover:bg-gray-50">
+                  <tr key={client.id} className="hover:bg-gray-50/50 transition-colors duration-150 group">
                     <td className="px-6 py-4">
-                      <div className="text-sm font-medium text-gray-900">{client.nom}</div>
-                      <div className="text-sm text-gray-500">ID: {client.id}</div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="text-sm text-gray-900">{client.telephone}</div>
-                      <div className="text-sm text-gray-500">Réference: {client.numero}</div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="text-sm text-gray-900">{client.quartier}</div>
-                      <div className="text-sm text-gray-500">{client.commune}, {client.ville}</div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="text-sm font-bold text-indigo-600">
-                        {client.nombreCommandes} commande(s)
+                      <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 bg-emerald-50 rounded-full flex items-center justify-center flex-shrink-0">
+                          <span className="text-emerald-700 font-bold text-sm">
+                            {client.nom.charAt(0).toUpperCase()}
+                          </span>
+                        </div>
+                        <div>
+                          <p className="text-sm font-semibold text-gray-800">{client.nom}</p>
+                          <p className="text-[11px] text-gray-400 font-mono mt-0.5">ID: {client.id.slice(0, 10)}...</p>
+                        </div>
                       </div>
-                      <div className="text-sm font-bold text-green-600">
-                        {formatPrice(client.totalDepense)}
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-1.5 text-sm text-gray-700">
+                        <Phone className="w-3.5 h-3.5 text-gray-400" />
+                        {client.telephone}
+                      </div>
+                      <div className="flex items-center gap-1.5 text-[11px] text-gray-400 mt-1">
+                        <Hash className="w-3 h-3" />
+                        Réf: {client.numero}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-start gap-1.5">
+                        <MapPin className="w-3.5 h-3.5 text-gray-400 mt-0.5 flex-shrink-0" />
+                        <div>
+                          <p className="text-sm text-gray-700">{client.quartier}</p>
+                          <p className="text-[11px] text-gray-400">{client.commune}, {client.ville}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex flex-col gap-1">
+                        <span className="inline-flex items-center gap-1 text-sm font-bold text-emerald-600">
+                          <ShoppingCart className="w-3.5 h-3.5" />
+                          {client.nombreCommandes} cmd
+                        </span>
+                        <span className="text-xs font-semibold text-gray-500">
+                          {formatPrice(client.totalDepense)}
+                        </span>
                       </div>
                     </td>
                     <td className="px-6 py-4">
                       <button
                         onClick={() => openModal(client)}
-                        className="text-indigo-600 hover:text-indigo-900 transition-colors p-2"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-50 text-gray-600 rounded-lg text-xs font-medium hover:bg-emerald-50 hover:text-emerald-700 transition-all duration-200 border border-gray-100 hover:border-emerald-200 group-hover:shadow-sm"
                         title="Voir les détails"
                       >
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                        </svg>
+                        <Eye className="w-3.5 h-3.5" />
+                        Détails
                       </button>
                     </td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan={5} className="px-6 py-4 text-center text-gray-500">
-                    {searchTerm ? 'Aucun client trouvé' : 'Aucun client disponible'}
+                  <td colSpan={5} className="px-6 py-12 text-center">
+                    <div className="flex flex-col items-center gap-2">
+                      <Users className="w-8 h-8 text-gray-300" />
+                      <p className="text-sm text-gray-400">
+                        {searchTerm ? 'Aucun client trouvé' : 'Aucun client disponible'}
+                      </p>
+                    </div>
                   </td>
                 </tr>
               )}
@@ -345,120 +388,131 @@ const Clients = () => {
 
       {/* Modal de détails */}
       {showModal && selectedClient && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-10 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white max-h-[90vh] overflow-y-auto">
-            <div className="mt-3">
-              {/* En-tête du modal */}
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-gray-900">
-                  Détails du client
-                </h3>
-                <button
-                  onClick={closeModal}
-                  className="text-gray-400 hover:text-gray-600"
-                >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm overflow-y-auto h-full w-full z-50 flex items-start justify-center pt-10 px-4" onClick={closeModal}>
+          <div className="relative w-full max-w-2xl bg-white rounded-2xl shadow-2xl max-h-[90vh] overflow-y-auto animate-fade-in-up" onClick={(e) => e.stopPropagation()}>
+            {/* Header du modal */}
+            <div className="sticky top-0 bg-white border-b border-gray-100 px-6 py-4 rounded-t-2xl flex items-center justify-between z-10">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-emerald-50 rounded-full flex items-center justify-center">
+                  <span className="text-emerald-700 font-bold text-lg">
+                    {selectedClient.nom.charAt(0).toUpperCase()}
+                  </span>
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-gray-900">{selectedClient.nom}</h3>
+                  <p className="text-xs text-gray-400">Détails du client</p>
+                </div>
               </div>
+              <button
+                onClick={closeModal}
+                className="p-2 rounded-xl hover:bg-gray-100 transition-colors"
+              >
+                <X className="w-5 h-5 text-gray-400" />
+              </button>
+            </div>
 
-              {/* Informations du client */}
-              <div className="mb-6">
-                <h4 className="font-medium text-gray-700 mb-2">Informations personnelles</h4>
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-sm text-gray-600">Nom</p>
-                      <p className="font-medium">{selectedClient.nom}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-600">Téléphone</p>
-                      <p className="font-medium">{selectedClient.telephone}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-600">ID Client</p>
-                      <p className="font-medium">{selectedClient.id}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-600">Numéro</p>
-                      <p className="font-medium">{selectedClient.numero}</p>
-                    </div>
+            <div className="p-6 space-y-5">
+              {/* Informations personnelles */}
+              <div>
+                <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                  <UserCircle className="w-4 h-4" />
+                  Informations personnelles
+                </h4>
+                <div className="bg-gray-50/80 p-4 rounded-xl grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-[11px] text-gray-400 font-medium uppercase tracking-wider">Nom</p>
+                    <p className="text-sm font-semibold text-gray-800 mt-0.5">{selectedClient.nom}</p>
+                  </div>
+                  <div>
+                    <p className="text-[11px] text-gray-400 font-medium uppercase tracking-wider">Téléphone</p>
+                    <p className="text-sm font-semibold text-gray-800 mt-0.5">{selectedClient.telephone}</p>
+                  </div>
+                  <div>
+                    <p className="text-[11px] text-gray-400 font-medium uppercase tracking-wider">ID Client</p>
+                    <p className="text-sm font-mono text-gray-600 mt-0.5">{selectedClient.id}</p>
+                  </div>
+                  <div>
+                    <p className="text-[11px] text-gray-400 font-medium uppercase tracking-wider">Numéro</p>
+                    <p className="text-sm font-semibold text-gray-800 mt-0.5">{selectedClient.numero}</p>
                   </div>
                 </div>
               </div>
 
               {/* Adresse complète */}
-              <div className="mb-6">
-                <h4 className="font-medium text-gray-700 mb-2">Adresse complète</h4>
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <div className="space-y-3">
+              <div>
+                <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                  <MapPin className="w-4 h-4" />
+                  Adresse complète
+                </h4>
+                <div className="bg-gray-50/80 p-4 rounded-xl space-y-4">
+                  <div>
+                    <p className="text-[11px] text-gray-400 font-medium uppercase tracking-wider">Adresse principale</p>
+                    <p className="text-sm font-semibold text-gray-800 mt-0.5">{selectedClient.adresse}</p>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <p className="text-sm text-gray-600">Adresse principale</p>
-                      <p className="font-medium">{selectedClient.adresse}</p>
+                      <p className="text-[11px] text-gray-400 font-medium uppercase tracking-wider">Avenue</p>
+                      <p className="text-sm text-gray-700 mt-0.5">{selectedClient.avenue}</p>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <p className="text-sm text-gray-600">Avenue</p>
-                        <p className="font-medium">{selectedClient.avenue}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-gray-600">Quartier</p>
-                        <p className="font-medium">{selectedClient.quartier}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-gray-600">Commune</p>
-                        <p className="font-medium">{selectedClient.commune}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-gray-600">Ville</p>
-                        <p className="font-medium">{selectedClient.ville}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-gray-600">Pays</p>
-                        <p className="font-medium">{selectedClient.pays}</p>
-                      </div>
+                    <div>
+                      <p className="text-[11px] text-gray-400 font-medium uppercase tracking-wider">Quartier</p>
+                      <p className="text-sm text-gray-700 mt-0.5">{selectedClient.quartier}</p>
+                    </div>
+                    <div>
+                      <p className="text-[11px] text-gray-400 font-medium uppercase tracking-wider">Commune</p>
+                      <p className="text-sm text-gray-700 mt-0.5">{selectedClient.commune}</p>
+                    </div>
+                    <div>
+                      <p className="text-[11px] text-gray-400 font-medium uppercase tracking-wider">Ville</p>
+                      <p className="text-sm text-gray-700 mt-0.5">{selectedClient.ville}</p>
+                    </div>
+                    <div>
+                      <p className="text-[11px] text-gray-400 font-medium uppercase tracking-wider">Pays</p>
+                      <p className="text-sm text-gray-700 mt-0.5">{selectedClient.pays}</p>
                     </div>
                   </div>
                 </div>
               </div>
 
               {/* Statistiques */}
-              <div className="mb-6">
-                <h4 className="font-medium text-gray-700 mb-2">Statistiques d'achat</h4>
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                      <p className="text-sm text-gray-600">Nombre de commandes</p>
-                      <p className="text-lg font-bold text-indigo-600">{selectedClient.nombreCommandes}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-600">Total dépensé</p>
-                      <p className="text-lg font-bold text-green-600">{formatPrice(selectedClient.totalDepense)}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-600">Dernière commande</p>
-                      <p className="font-medium">{formatDate(selectedClient.derniereCommande)}</p>
-                    </div>
+              <div>
+                <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                  <ShoppingCart className="w-4 h-4" />
+                  Statistiques d'achat
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <div className="bg-emerald-50/80 p-4 rounded-xl text-center">
+                    <p className="text-[11px] text-emerald-600/70 font-medium uppercase tracking-wider">Commandes</p>
+                    <p className="text-2xl font-extrabold text-emerald-700 mt-1">{selectedClient.nombreCommandes}</p>
+                  </div>
+                  <div className="bg-blue-50/80 p-4 rounded-xl text-center">
+                    <p className="text-[11px] text-blue-600/70 font-medium uppercase tracking-wider">Total dépensé</p>
+                    <p className="text-lg font-extrabold text-blue-700 mt-1">{formatPrice(selectedClient.totalDepense)}</p>
+                  </div>
+                  <div className="bg-amber-50/80 p-4 rounded-xl text-center">
+                    <p className="text-[11px] text-amber-600/70 font-medium uppercase tracking-wider">Dernière cmd</p>
+                    <p className="text-sm font-bold text-amber-700 mt-1">{formatDate(selectedClient.derniereCommande)}</p>
                   </div>
                 </div>
               </div>
+            </div>
 
-              {/* Actions */}
-              <div className="flex items-center justify-end space-x-2 pt-4 border-t">
-                <button 
-                  onClick={closeModal}
-                  className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 transition"
-                >
-                  Fermer
-                </button>
-                <button className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition">
-                  Contacter
-                </button>
-                <button className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition">
-                  Historique
-                </button>
-              </div>
+            {/* Footer du modal */}
+            <div className="sticky bottom-0 bg-white border-t border-gray-100 px-6 py-4 rounded-b-2xl flex items-center justify-end gap-2">
+              <button 
+                onClick={closeModal}
+                className="px-4 py-2 bg-gray-100 text-gray-600 rounded-xl hover:bg-gray-200 transition-colors text-sm font-medium"
+              >
+                Fermer
+              </button>
+              <button className="inline-flex items-center gap-1.5 px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors text-sm font-medium">
+                <Phone className="w-3.5 h-3.5" />
+                Contacter
+              </button>
+              <button className="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-colors text-sm font-medium">
+                <Calendar className="w-3.5 h-3.5" />
+                Historique
+              </button>
             </div>
           </div>
         </div>

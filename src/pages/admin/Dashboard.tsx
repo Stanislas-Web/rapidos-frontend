@@ -7,6 +7,10 @@ import { collection, onSnapshot, orderBy, limit, query } from 'firebase/firestor
 import { db } from '../../firebase/config';
 import api from '../../utils/api';
 import StartCard from '../../components/admin/StartCard';
+import {
+  Users, CreditCard, Package, Truck, Store,
+  TrendingUp, ShoppingCart, Calendar, ArrowUpRight
+} from 'lucide-react';
 
 type CartType = {
   id?: string;
@@ -451,39 +455,68 @@ const Dashboard = () => {
   }, [vendeursCount, vendeursLoading]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white pb-16">
-      {/* Bannière */}
-      <div className="bg-[#3A905B] text-white text-center py-10 rounded-b-3xl shadow-lg mb-8 animate-fade-in-down">
-        <h1 className="text-4xl font-bold mb-2">Bienvenue sur le tableau de bord rapidos</h1>
-        <p className="text-md font-light">Suivez les statistiques en temps réel</p>
+    <div className="min-h-screen bg-gray-50/80 pb-16">
+      {/* En-tête */}
+      <div className="relative overflow-hidden bg-gradient-to-r from-[#2d7a4a] via-[#3A905B] to-[#4aa96c] text-white py-10 md:py-14 px-6 md:px-8 rounded-b-[2rem] shadow-xl mb-10 animate-fade-in-down">
+        {/* Éléments décoratifs */}
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute -top-16 -right-16 w-64 h-64 bg-white/5 rounded-full blur-3xl" />
+          <div className="absolute -bottom-20 -left-10 w-48 h-48 bg-[#EBCD77]/10 rounded-full blur-3xl" />
+          <div className="absolute top-1/2 right-1/4 w-32 h-32 bg-white/5 rounded-full blur-2xl" />
+        </div>
+        <div className="relative max-w-7xl mx-auto">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+              <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight mb-1">
+                Tableau de bord
+              </h1>
+              <p className="text-white/70 text-sm md:text-base">
+                Suivez vos statistiques et performances en temps réel
+              </p>
+            </div>
+            <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2.5 rounded-xl border border-white/20">
+              <Calendar className="w-4 h-4 text-white/80" />
+              <span className="text-sm text-white/90 font-medium">
+                {new Date().toLocaleDateString('fr-FR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+              </span>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Statistiques */}
-      <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        <StartCard title="Total Clients" value={stats.clients} icon="👥" color="text-white bg-[#EBCD77] animate-fade-in-up" />
-        <StartCard title="Transactions" value={stats.transactions} icon="💳" color="text-white bg-[#08120C] animate-fade-in-up" />
-        <StartCard title="Produits" value={stats.produits} icon="📦" color="text-white bg-[#3A905B] animate-fade-in-up" />
-        <StartCard title="Livreurs" value={stats.livreurs} icon="🚚" color="text-white bg-[#7C7C7C] animate-fade-in-up" />
-        <StartCard title="Vendeurs" value={stats.vendeurs} icon="🧑‍💼" color="text-white bg-[#A65E2E] animate-fade-in-up" />
+      <div className="max-w-7xl mx-auto px-6 -mt-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-5">
+          <StartCard title="Total Clients" value={stats.clients} icon={<Users className="w-7 h-7" />} color="bg-gradient-to-br from-[#EBCD77] to-[#d4b55a] animate-fade-in-up" />
+          <StartCard title="Transactions" value={stats.transactions} icon={<CreditCard className="w-7 h-7" />} color="bg-gradient-to-br from-[#1a1a2e] to-[#16213e] animate-fade-in-up" />
+          <StartCard title="Produits" value={stats.produits} icon={<Package className="w-7 h-7" />} color="bg-gradient-to-br from-[#3A905B] to-[#2d7a4a] animate-fade-in-up" />
+          <StartCard title="Livreurs" value={stats.livreurs} icon={<Truck className="w-7 h-7" />} color="bg-gradient-to-br from-[#6b7280] to-[#4b5563] animate-fade-in-up" />
+          <StartCard title="Vendeurs" value={stats.vendeurs} icon={<Store className="w-7 h-7" />} color="bg-gradient-to-br from-[#A65E2E] to-[#8B4513] animate-fade-in-up" />
+        </div>
       </div>
 
       {/* Graphiques */}
-      <div className="max-w-7xl mx-auto px-6 mt-12 grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <div className="max-w-7xl mx-auto px-6 mt-10 grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Ligne - Évolution des ventes */}
-        <div className="bg-white rounded-2xl shadow-lg p-8 border border-gray-100">
+        <div className="bg-white rounded-2xl shadow-sm hover:shadow-md transition-shadow duration-300 p-6 border border-gray-100/80">
           <div className="flex items-center justify-between mb-6">
-            <div>
-              <h2 className="text-2xl font-bold text-gray-800 mb-2">Évolution des commandes</h2>
-              <p className="text-gray-600 text-sm">Tendances hebdomadaires des ventes</p>
-            </div>
-            <div className="flex space-x-4">
-              <div className="flex items-center space-x-2">
-                <div className="w-3 h-3 bg-[#08120C] rounded-full"></div>
-                <span className="text-xs text-gray-600">Commandes</span>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-emerald-50 rounded-xl flex items-center justify-center">
+                <TrendingUp className="w-5 h-5 text-emerald-600" />
               </div>
-              <div className="flex items-center space-x-2">
-                <div className="w-3 h-3 bg-[#3A905B] rounded-full"></div>
-                <span className="text-xs text-gray-600">Montant</span>
+              <div>
+                <h2 className="text-lg font-bold text-gray-800">Évolution des commandes</h2>
+                <p className="text-gray-400 text-xs">Tendances hebdomadaires</p>
+              </div>
+            </div>
+            <div className="flex gap-3">
+              <div className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 bg-[#08120C] rounded-full"></span>
+                <span className="text-[11px] text-gray-500">Commandes</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 bg-[#3A905B] rounded-full"></span>
+                <span className="text-[11px] text-gray-500">Montant</span>
               </div>
             </div>
           </div>
@@ -535,20 +568,25 @@ const Dashboard = () => {
         </div>
 
         {/* Barres - Commandes par vendeur */}
-        <div className="bg-white rounded-2xl shadow-lg p-8 border border-gray-100">
+        <div className="bg-white rounded-2xl shadow-sm hover:shadow-md transition-shadow duration-300 p-6 border border-gray-100/80">
           <div className="flex items-center justify-between mb-6">
-            <div>
-              <h2 className="text-2xl font-bold text-gray-800 mb-2">Commandes par vendeur</h2>
-              <p className="text-gray-600 text-sm">Top 8 des vendeurs les plus performants</p>
-            </div>
-            <div className="flex space-x-4">
-              <div className="flex items-center space-x-2">
-                <div className="w-3 h-3 bg-[#3A905B] rounded-full"></div>
-                <span className="text-xs text-gray-600">Commandes</span>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-amber-50 rounded-xl flex items-center justify-center">
+                <Store className="w-5 h-5 text-amber-600" />
               </div>
-              <div className="flex items-center space-x-2">
-                <div className="w-3 h-3 bg-[#08120C] rounded-full"></div>
-                <span className="text-xs text-gray-600">Montant</span>
+              <div>
+                <h2 className="text-lg font-bold text-gray-800">Commandes par vendeur</h2>
+                <p className="text-gray-400 text-xs">Top 8 des vendeurs</p>
+              </div>
+            </div>
+            <div className="flex gap-3">
+              <div className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 bg-[#3A905B] rounded-full"></span>
+                <span className="text-[11px] text-gray-500">Commandes</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 bg-[#08120C] rounded-full"></span>
+                <span className="text-[11px] text-gray-500">Montant</span>
               </div>
             </div>
           </div>
@@ -596,44 +634,60 @@ const Dashboard = () => {
       </div>
 
       {/* Table - Commandes récentes */}
-      <div className="max-w-7xl mx-auto px-6 mt-12">
-        <div className="bg-white rounded-xl shadow-md p-6">
-          <h2 className="text-xl font-bold mb-4 text-gray-700">Commandes récentes</h2>
+      <div className="max-w-7xl mx-auto px-6 mt-10">
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100/80 overflow-hidden">
+          {/* En-tête du tableau */}
+          <div className="px-6 py-5 border-b border-gray-100 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center">
+                <ShoppingCart className="w-5 h-5 text-blue-600" />
+              </div>
+              <div>
+                <h2 className="text-lg font-bold text-gray-800">Commandes récentes</h2>
+                <p className="text-gray-400 text-xs">Les 6 dernières commandes</p>
+              </div>
+            </div>
+            <span className="text-xs text-gray-400 bg-gray-50 px-3 py-1.5 rounded-lg font-medium">
+              {recentOrders.length} commande{recentOrders.length > 1 ? 's' : ''}
+            </span>
+          </div>
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-100">
-                <tr>
-                  <th className="px-4 py-2 text-left text-sm font-semibold text-gray-600">ID</th>
-                  <th className="px-4 py-2 text-left text-sm font-semibold text-gray-600">Client</th>
-                  <th className="px-4 py-2 text-left text-sm font-semibold text-gray-600">Montant</th>
-                  <th className="px-4 py-2 text-left text-sm font-semibold text-gray-600">Statut</th>
+            <table className="min-w-full">
+              <thead>
+                <tr className="bg-gray-50/80">
+                  <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">ID</th>
+                  <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Client</th>
+                  <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Montant</th>
+                  <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Statut</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="divide-y divide-gray-50">
                 {loading ? (
                   <tr>
-                    <td colSpan={4} className="px-4 py-4 text-center text-gray-500">
-                      <div className="flex items-center justify-center">
-                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-indigo-600"></div>
-                        <span className="ml-2">Chargement des commandes...</span>
+                    <td colSpan={4} className="px-6 py-8 text-center text-gray-400">
+                      <div className="flex items-center justify-center gap-3">
+                        <div className="animate-spin rounded-full h-5 w-5 border-2 border-emerald-200 border-t-emerald-600"></div>
+                        <span className="text-sm">Chargement des commandes...</span>
                       </div>
                     </td>
                   </tr>
                 ) : recentOrders.length > 0 ? (
                   recentOrders.map((order) => (
-                    <tr key={order.id} className="hover:bg-gray-50">
-                      <td className="px-4 py-3 text-sm text-gray-700 font-medium">
+                    <tr key={order.id} className="hover:bg-gray-50/50 transition-colors duration-150">
+                      <td className="px-6 py-4 text-sm text-gray-600 font-mono font-medium">
                         #{order.id?.slice(-6)}
                       </td>
-                      <td className="px-4 py-3 text-sm text-gray-700">
-                        <div className="font-medium">{order.client}</div>
-                        <div className="text-xs text-gray-500">{order.phone}</div>
+                      <td className="px-6 py-4">
+                        <div className="text-sm font-semibold text-gray-800">{order.client}</div>
+                        <div className="text-xs text-gray-400 mt-0.5">{order.phone}</div>
                       </td>
-                      <td className="px-4 py-3 text-sm font-semibold text-green-600">
-                        {formatPrice(order.total)}
+                      <td className="px-6 py-4">
+                        <span className="text-sm font-bold text-emerald-600">
+                          {formatPrice(order.total)}
+                        </span>
                       </td>
-                      <td className="px-4 py-3">
-                        <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(order.status)}`}>
+                      <td className="px-6 py-4">
+                        <span className={`inline-flex items-center px-2.5 py-1 text-xs font-semibold rounded-full ${getStatusColor(order.status)}`}>
                           {getStatusText(order.status)}
                         </span>
                       </td>
@@ -641,7 +695,7 @@ const Dashboard = () => {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={4} className="px-4 py-4 text-center text-gray-500">
+                    <td colSpan={4} className="px-6 py-8 text-center text-gray-400 text-sm">
                       Aucune commande récente
                     </td>
                   </tr>

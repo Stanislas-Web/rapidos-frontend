@@ -10,6 +10,7 @@ import Transactions from '../pages/admin/Transactions';
 import Vendeurs from '../pages/admin/Vendeurs';
 import Commandes from '../pages/admin/Commandes'; 
 import Categories from '../pages/admin/Categories'; // ✅
+import CommandeExpress from '../pages/admin/CommandeExpress';
 
 
 const AdminRoutes = () => {
@@ -23,6 +24,7 @@ const AdminRoutes = () => {
         <Route path="transactions" element={<Transactions />} />
         <Route path="vendeurs" element={<Vendeurs />} />
         <Route path="commandes" element={<Commandes />} /> {/* ✅ Ajouté */}
+        <Route path="commande-express" element={<CommandeExpress />} />
         <Route path="categories" element={<Categories />} />
  ✅
 

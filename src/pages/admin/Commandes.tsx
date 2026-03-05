@@ -1,6 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import api from '../../utils/api';
 import * as XLSX from 'xlsx';
+import {
+  ShoppingCart, Clock, CheckCircle, Truck, DollarSign,
+  Search, X, Eye, AlertCircle, Filter, Download, BarChart3,
+  User, Phone, MapPin, Package, Calendar, ChevronLeft, ChevronRight,
+  XCircle, FileSpreadsheet
+} from 'lucide-react';
 
 type CartItemType = {
   id: number;
@@ -322,57 +328,110 @@ const Commandes = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center p-8">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
-        <span className="ml-2 text-gray-600">Chargement des commandes...</span>
+      <div className="flex flex-col items-center justify-center p-16 bg-white rounded-2xl border border-gray-100 shadow-sm m-4 md:m-6">
+        <div className="animate-spin rounded-full h-10 w-10 border-[3px] border-emerald-200 border-t-emerald-600"></div>
+        <span className="mt-4 text-gray-500 font-medium">Chargement des commandes...</span>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
-        {error}
+      <div className="flex items-center gap-3 bg-red-50 border border-red-200 text-red-700 px-5 py-4 rounded-2xl m-4 md:m-6">
+        <AlertCircle className="w-5 h-5 flex-shrink-0" />
+        <span className="font-medium">{error}</span>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6 p-4">
-      <h1 className="text-2xl font-bold text-gray-800">Gestion des Commandes</h1>
+    <div className="space-y-6 p-4 md:p-6 max-w-full overflow-hidden">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-3">
+            <div className="p-2 bg-emerald-100 rounded-xl">
+              <ShoppingCart className="w-6 h-6 text-emerald-600" />
+            </div>
+            Gestion des Commandes
+          </h1>
+          <p className="text-sm text-gray-500 mt-1 ml-14">Suivi et gestion de toutes les commandes</p>
+        </div>
+        {!loading && !error && (
+          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 text-emerald-700 text-sm font-medium rounded-full border border-emerald-200">
+            <ShoppingCart className="w-4 h-4" />
+            {filteredCarts.length} commande{filteredCarts.length > 1 ? 's' : ''}
+          </span>
+        )}
+      </div>
 
       {/* Statistiques */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white p-4 rounded-lg border shadow-sm">
-          <h3 className="text-lg font-semibold text-gray-700">Total Commandes</h3>
-          <p className="text-2xl font-bold text-indigo-600">{filteredCarts.length}</p>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="relative overflow-hidden bg-white p-5 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow duration-300">
+          <div className="absolute -top-3 -right-3 w-16 h-16 bg-emerald-50 rounded-full" />
+          <div className="relative flex items-center gap-4">
+            <div className="w-11 h-11 bg-emerald-50 rounded-xl flex items-center justify-center flex-shrink-0">
+              <ShoppingCart className="w-5 h-5 text-emerald-600" />
+            </div>
+            <div>
+              <p className="text-xs font-medium text-gray-400 uppercase tracking-wider">Total Commandes</p>
+              <p className="text-2xl font-extrabold text-gray-900 mt-0.5">{filteredCarts.length}</p>
+            </div>
+          </div>
         </div>
-        <div className="bg-white p-4 rounded-lg border shadow-sm">
-          <h3 className="text-lg font-semibold text-gray-700">En Attente</h3>
-          <p className="text-2xl font-bold text-yellow-600">
-            {filteredCarts.filter(cart => cart.status === 'pending').length}
-          </p>
+        <div className="relative overflow-hidden bg-white p-5 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow duration-300">
+          <div className="absolute -top-3 -right-3 w-16 h-16 bg-amber-50 rounded-full" />
+          <div className="relative flex items-center gap-4">
+            <div className="w-11 h-11 bg-amber-50 rounded-xl flex items-center justify-center flex-shrink-0">
+              <Clock className="w-5 h-5 text-amber-600" />
+            </div>
+            <div>
+              <p className="text-xs font-medium text-gray-400 uppercase tracking-wider">En Attente</p>
+              <p className="text-2xl font-extrabold text-gray-900 mt-0.5">
+                {filteredCarts.filter(cart => cart.status === 'pending').length}
+              </p>
+            </div>
+          </div>
         </div>
-        <div className="bg-white p-4 rounded-lg border shadow-sm">
-          <h3 className="text-lg font-semibold text-gray-700">Livrées</h3>
-          <p className="text-2xl font-bold text-green-600">
-            {filteredCarts.filter(cart => cart.status === 'delivered').length}
-          </p>
+        <div className="relative overflow-hidden bg-white p-5 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow duration-300">
+          <div className="absolute -top-3 -right-3 w-16 h-16 bg-green-50 rounded-full" />
+          <div className="relative flex items-center gap-4">
+            <div className="w-11 h-11 bg-green-50 rounded-xl flex items-center justify-center flex-shrink-0">
+              <CheckCircle className="w-5 h-5 text-green-600" />
+            </div>
+            <div>
+              <p className="text-xs font-medium text-gray-400 uppercase tracking-wider">Livrées</p>
+              <p className="text-2xl font-extrabold text-gray-900 mt-0.5">
+                {filteredCarts.filter(cart => cart.status === 'delivered').length}
+              </p>
+            </div>
+          </div>
         </div>
-        <div className="bg-white p-4 rounded-lg border shadow-sm">
-          <h3 className="text-lg font-semibold text-gray-700">Chiffre d'affaires</h3>
-          <p className="text-lg font-bold text-blue-600">
-            {formatPrice(filteredCarts.reduce((total, cart) => total + cart.total, 0))}
-          </p>
+        <div className="relative overflow-hidden bg-white p-5 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow duration-300">
+          <div className="absolute -top-3 -right-3 w-16 h-16 bg-blue-50 rounded-full" />
+          <div className="relative flex items-center gap-4">
+            <div className="w-11 h-11 bg-blue-50 rounded-xl flex items-center justify-center flex-shrink-0">
+              <DollarSign className="w-5 h-5 text-blue-600" />
+            </div>
+            <div>
+              <p className="text-xs font-medium text-gray-400 uppercase tracking-wider">Chiffre d'affaires</p>
+              <p className="text-xl font-extrabold text-gray-900 mt-0.5">
+                {formatPrice(filteredCarts.reduce((total, cart) => total + cart.total, 0))}
+              </p>
+            </div>
+          </div>
         </div>
       </div>
 
       {/* Filtres et recherche */}
-      <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
-        <div className="space-y-6">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+        <div className="p-4 md:p-5 space-y-5">
           {/* En-tête des filtres */}
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-gray-800">Filtres et recherche</h3>
+            <div className="flex items-center gap-2">
+              <Filter className="w-4 h-4 text-gray-400" />
+              <h3 className="text-sm font-semibold text-gray-700">Filtres et recherche</h3>
+            </div>
             {(searchTerm || statusFilter !== 'all' || dateFilter !== 'all' || startDate || endDate) && (
               <button
                 onClick={() => {
@@ -382,165 +441,131 @@ const Commandes = () => {
                   setStartDate('');
                   setEndDate('');
                 }}
-                className="text-sm text-indigo-600 hover:text-indigo-800 font-medium flex items-center space-x-2 transition-colors"
+                className="text-xs text-emerald-600 hover:text-emerald-800 font-medium flex items-center gap-1.5 transition-colors"
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
+                <X className="w-3.5 h-3.5" />
                 <span>Effacer les filtres</span>
               </button>
             )}
           </div>
 
-          <div className="space-y-6">
-            {/* Première ligne - Filtres principaux */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {/* Barre de recherche améliorée */}
-              <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700">
-                  Recherche
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                    <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                    </svg>
-                  </div>
-                  <input
-                    type="text"
-                    placeholder="Client, téléphone, produit..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="block w-full pl-12 pr-4 py-3 border border-gray-200 rounded-lg leading-5 bg-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200"
-                  />
-                  {searchTerm && (
-                    <button
-                      onClick={() => setSearchTerm('')}
-                      className="absolute inset-y-0 right-0 pr-4 flex items-center"
-                    >
-                      <svg className="h-5 w-5 text-gray-400 hover:text-gray-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                      </svg>
-                    </button>
-                  )}
-                </div>
-              </div>
+          {/* Première ligne - Recherche + Filtres */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Barre de recherche */}
+            <div className="relative">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+              <input
+                type="text"
+                placeholder="Client, téléphone, produit..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="block w-full pl-11 pr-10 py-3 border border-gray-200 rounded-xl text-sm bg-gray-50/50 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 focus:bg-white transition-all duration-200"
+              />
+              {searchTerm && (
+                <button
+                  onClick={() => setSearchTerm('')}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-lg hover:bg-gray-100 transition-colors"
+                >
+                  <X className="w-4 h-4 text-gray-400" />
+                </button>
+              )}
+            </div>
 
-              {/* Filtre par statut amélioré */}
-              <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700">
-                  Statut
-                </label>
-                <div className="relative">
-                  <select
-                    value={statusFilter}
-                    onChange={(e) => setStatusFilter(e.target.value)}
-                    className="block w-full px-4 py-3 border border-gray-200 rounded-lg leading-5 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 appearance-none"
-                  >
-                    <option value="all">Tous les statuts</option>
-                    <option value="pending">En attente</option>
-                    <option value="colis en cours de préparation">En préparation</option>
-                    <option value="prêt à expédier">Prêt à expédier</option>
-                    <option value="en route pour livraison">En route pour livraison</option>
-                    <option value="delivered">Livrée</option>
-                    <option value="cancelled">Annulée</option>
-                    <option value="rejected">Rejetée</option>
-                  </select>
-                  <div className="absolute inset-y-0 right-0 flex items-center pr-4 pointer-events-none">
-                    <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </div>
-                </div>
-              </div>
-
-              {/* Filtre par date */}
-              <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700">
-                  Période
-                </label>
-                <div className="relative">
-                  <select
-                    value={dateFilter}
-                    onChange={(e) => setDateFilter(e.target.value)}
-                    className="block w-full px-4 py-3 border border-gray-200 rounded-lg leading-5 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 appearance-none"
-                  >
-                    <option value="all">Toutes les périodes</option>
-                    <option value="today">Aujourd'hui</option>
-                    <option value="week">Cette semaine</option>
-                    <option value="month">Ce mois</option>
-                    <option value="year">Cette année</option>
-                    <option value="custom" disabled={!(startDate || endDate)}>
-                      {startDate || endDate ? 'Personnalisé' : 'Personnalisé (sélectionnez une date)'}
-                    </option>
-                  </select>
-                  <div className="absolute inset-y-0 right-0 flex items-center pr-4 pointer-events-none">
-                    <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </div>
-                </div>
+            {/* Filtre par statut */}
+            <div className="relative">
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="block w-full px-4 py-3 border border-gray-200 rounded-xl text-sm bg-gray-50/50 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 focus:bg-white transition-all duration-200 appearance-none"
+              >
+                <option value="all">Tous les statuts</option>
+                <option value="pending">En attente</option>
+                <option value="colis en cours de préparation">En préparation</option>
+                <option value="prêt à expédier">Prêt à expédier</option>
+                <option value="en route pour livraison">En route pour livraison</option>
+                <option value="delivered">Livrée</option>
+                <option value="cancelled">Annulée</option>
+                <option value="rejected">Rejetée</option>
+              </select>
+              <div className="absolute inset-y-0 right-0 flex items-center pr-4 pointer-events-none">
+                <ChevronRight className="w-4 h-4 text-gray-400 rotate-90" />
               </div>
             </div>
 
-            {/* Deuxième ligne - Dates personnalisées */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700">
-                  Date de début
-                </label>
-                <input
-                  type="date"
-                  value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
-                  className="block w-full px-4 py-3 border border-gray-200 rounded-lg leading-5 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200"
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700">
-                  Date de fin
-                </label>
-                <input
-                  type="date"
-                  value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
-                  className="block w-full px-4 py-3 border border-gray-200 rounded-lg leading-5 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200"
-                />
+            {/* Filtre par date */}
+            <div className="relative">
+              <select
+                value={dateFilter}
+                onChange={(e) => setDateFilter(e.target.value)}
+                className="block w-full px-4 py-3 border border-gray-200 rounded-xl text-sm bg-gray-50/50 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 focus:bg-white transition-all duration-200 appearance-none"
+              >
+                <option value="all">Toutes les périodes</option>
+                <option value="today">Aujourd'hui</option>
+                <option value="week">Cette semaine</option>
+                <option value="month">Ce mois</option>
+                <option value="year">Cette année</option>
+                <option value="custom" disabled={!(startDate || endDate)}>
+                  {startDate || endDate ? 'Personnalisé' : 'Personnalisé (sélectionnez une date)'}
+                </option>
+              </select>
+              <div className="absolute inset-y-0 right-0 flex items-center pr-4 pointer-events-none">
+                <ChevronRight className="w-4 h-4 text-gray-400 rotate-90" />
               </div>
             </div>
           </div>
 
+          {/* Dates personnalisées */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="relative">
+              <label className="block text-xs font-medium text-gray-400 uppercase tracking-wider mb-1.5">Date de début</label>
+              <input
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className="block w-full px-4 py-3 border border-gray-200 rounded-xl text-sm bg-gray-50/50 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 focus:bg-white transition-all duration-200"
+              />
+            </div>
+            <div className="relative">
+              <label className="block text-xs font-medium text-gray-400 uppercase tracking-wider mb-1.5">Date de fin</label>
+              <input
+                type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                className="block w-full px-4 py-3 border border-gray-200 rounded-xl text-sm bg-gray-50/50 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 focus:bg-white transition-all duration-200"
+              />
+            </div>
+          </div>
+
           {/* Résultats et actions */}
-          <div className="flex items-center justify-between pt-6 border-t border-gray-100">
-            <div className="flex items-center space-x-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between pt-4 border-t border-gray-100 gap-3">
+            <div className="flex items-center gap-4">
               {(searchTerm || statusFilter !== 'all' || dateFilter !== 'all' || startDate || endDate) && (
-                <div className="flex items-center space-x-2 text-sm text-gray-600">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  <span>{filteredCarts.length} commande(s) trouvée(s)</span>
-                </div>
+                <p className="text-xs text-gray-400">
+                  {filteredCarts.length} résultat{filteredCarts.length > 1 ? 's' : ''} trouvé{filteredCarts.length > 1 ? 's' : ''}
+                </p>
               )}
               {filteredCarts.length > 0 && (
-                <div className="text-sm text-gray-500">
+                <p className="text-xs font-semibold text-gray-600">
                   Total: {formatPrice(filteredCarts.reduce((total, cart) => total + cart.total, 0))}
-                </div>
+                </p>
               )}
             </div>
             
             {/* Actions rapides */}
-            <div className="flex items-center space-x-3">
+            <div className="flex items-center gap-2">
               <button 
                 onClick={exportToExcel}
                 disabled={filteredCarts.length === 0}
-                className="px-4 py-2 text-sm bg-gray-50 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors border border-gray-200 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
+                className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium bg-gray-50 text-gray-600 rounded-xl hover:bg-gray-100 transition-colors border border-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
               >
+                <FileSpreadsheet className="w-3.5 h-3.5" />
                 Export
               </button>
               <button 
                 onClick={openStatsModal}
-                className="px-4 py-2 text-sm bg-indigo-50 text-indigo-700 rounded-lg hover:bg-indigo-100 transition-colors border border-indigo-200"
+                className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium bg-emerald-50 text-emerald-700 rounded-xl hover:bg-emerald-100 transition-colors border border-emerald-200"
               >
+                <BarChart3 className="w-3.5 h-3.5" />
                 Statistiques
               </button>
             </div>
@@ -549,88 +574,96 @@ const Commandes = () => {
       </div>
 
       {/* Tableau des commandes */}
-      <div className="bg-white rounded-lg border shadow-sm overflow-hidden">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="min-w-full">
-            <thead className="bg-gray-50 text-gray-700">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+          <table className="w-full table-auto">
+            <thead>
+              <tr className="bg-gray-50/80 border-b border-gray-100">
+                <th className="px-4 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
                   Commande
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
                   Client
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
                   Produits
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
                   Total
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
                   Statut
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
                   Date
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Actions
+                <th className="px-4 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-16">
+                  Détails
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className="divide-y divide-gray-50">
               {filteredCarts.length > 0 ? (
                 filteredCarts.map((cart) => (
-                  <tr key={cart.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">
-                        #{cart.id?.slice(-8)}
+                  <tr key={cart.id} className="hover:bg-gray-50/50 transition-colors duration-150">
+                    <td className="px-4 py-4 whitespace-nowrap">
+                      <span className="text-sm font-semibold text-gray-900">#{cart.id?.slice(-8)}</span>
+                    </td>
+                    <td className="px-4 py-4 whitespace-nowrap">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 bg-emerald-50 rounded-lg flex items-center justify-center flex-shrink-0">
+                          <User className="w-4 h-4 text-emerald-600" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-gray-900">{cart.client}</p>
+                          <p className="text-xs text-gray-400">{cart.phone}</p>
+                        </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div>
-                        <div className="text-sm font-medium text-gray-900">{cart.client}</div>
-                        <div className="text-sm text-gray-500">{cart.phone}</div>
+                    <td className="px-6 py-4 max-w-[200px]">
+                      <div className="flex items-center gap-2">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-gray-100 text-gray-600 text-xs font-medium rounded-md flex-shrink-0">
+                          <Package className="w-3 h-3" />
+                          {cart.items.length}
+                        </span>
+                        <span className="text-xs text-gray-400 truncate">
+                          {cart.items.map(item => item.name).join(', ')}
+                        </span>
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">
-                        {cart.items.length} produit(s)
-                      </div>
-                      <div className="text-sm text-gray-500">
-                        {cart.items.map(item => item.name).join(', ')}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-bold text-green-600">
+                    <td className="px-4 py-4 whitespace-nowrap">
+                      <span className="text-sm font-bold text-emerald-600">
                         {formatPrice(cart.total)}
-                      </div>
+                      </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 py-1 text-xs font-medium rounded-full border ${getStatusColor(cart.status)}`}>
+                    <td className="px-4 py-4 whitespace-nowrap">
+                      <span className={`inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-lg border ${getStatusColor(cart.status)}`}>
                         {getStatusText(cart.status)}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {formatDate(cart.timestamp)}
+                    <td className="px-4 py-4 whitespace-nowrap">
+                      <span className="text-xs text-gray-500">{formatDate(cart.timestamp)}</span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-4 py-4 whitespace-nowrap">
                       <button
                         onClick={() => openModal(cart)}
-                        className="text-indigo-600 hover:text-indigo-900 transition-colors p-2"
+                        className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 transition-all duration-200"
                         title="Voir les détails"
                       >
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                        </svg>
+                        <Eye className="w-4 h-4" />
                       </button>
                     </td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan={7} className="px-6 py-4 text-center text-gray-500">
-                    {searchTerm || statusFilter !== 'all' ? 'Aucune commande trouvée' : 'Aucune commande disponible'}
+                  <td colSpan={7} className="px-6 py-12 text-center">
+                    <div className="flex flex-col items-center gap-2">
+                      <ShoppingCart className="w-8 h-8 text-gray-300" />
+                      <p className="text-sm text-gray-400 font-medium">
+                        {searchTerm || statusFilter !== 'all' ? 'Aucune commande trouvée' : 'Aucune commande disponible'}
+                      </p>
+                    </div>
                   </td>
                 </tr>
               )}
@@ -640,72 +673,50 @@ const Commandes = () => {
         
         {/* Pagination */}
         {totalPages > 1 && (
-          <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
-            <div className="flex-1 flex justify-between sm:hidden">
+          <div className="px-6 py-4 flex items-center justify-between border-t border-gray-100">
+            <p className="text-xs text-gray-400">
+              Page <span className="font-semibold text-gray-600">{currentPage}</span> sur <span className="font-semibold text-gray-600">{totalPages}</span>
+            </p>
+            <div className="flex items-center gap-1">
               <button
                 onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                 disabled={currentPage === 1}
-                className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
               >
-                Précédent
+                <ChevronLeft className="w-4 h-4" />
               </button>
+              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                let pageNum;
+                if (totalPages <= 5) {
+                  pageNum = i + 1;
+                } else if (currentPage <= 3) {
+                  pageNum = i + 1;
+                } else if (currentPage >= totalPages - 2) {
+                  pageNum = totalPages - 4 + i;
+                } else {
+                  pageNum = currentPage - 2 + i;
+                }
+                return (
+                  <button
+                    key={pageNum}
+                    onClick={() => setCurrentPage(pageNum)}
+                    className={`w-8 h-8 flex items-center justify-center rounded-lg text-xs font-medium transition-colors ${
+                      currentPage === pageNum
+                        ? 'bg-emerald-50 border border-emerald-200 text-emerald-700'
+                        : 'border border-gray-200 text-gray-500 hover:bg-gray-50'
+                    }`}
+                  >
+                    {pageNum}
+                  </button>
+                );
+              })}
               <button
                 onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
                 disabled={currentPage === totalPages}
-                className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
               >
-                Suivant
+                <ChevronRight className="w-4 h-4" />
               </button>
-            </div>
-            <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-              <div>
-                <p className="text-sm text-gray-700">
-                  Page <span className="font-medium">{currentPage}</span> sur <span className="font-medium">{totalPages}</span>
-                </p>
-              </div>
-              <div>
-                <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
-                  <button
-                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                    disabled={currentPage === 1}
-                    className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    Précédent
-                  </button>
-                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                    let pageNum;
-                    if (totalPages <= 5) {
-                      pageNum = i + 1;
-                    } else if (currentPage <= 3) {
-                      pageNum = i + 1;
-                    } else if (currentPage >= totalPages - 2) {
-                      pageNum = totalPages - 4 + i;
-                    } else {
-                      pageNum = currentPage - 2 + i;
-                    }
-                    return (
-                      <button
-                        key={pageNum}
-                        onClick={() => setCurrentPage(pageNum)}
-                        className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
-                          currentPage === pageNum
-                            ? 'z-10 bg-indigo-50 border-indigo-500 text-indigo-600'
-                            : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
-                        }`}
-                      >
-                        {pageNum}
-                      </button>
-                    );
-                  })}
-                  <button
-                    onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                    disabled={currentPage === totalPages}
-                    className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    Suivant
-                  </button>
-                </nav>
-              </div>
             </div>
           </div>
         )}
@@ -713,44 +724,56 @@ const Commandes = () => {
 
       {/* Modal de détails */}
       {showModal && selectedCart && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-10 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white max-h-[90vh] overflow-y-auto">
-            <div className="mt-3">
-              {/* En-tête du modal */}
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-gray-900">
-                  Détails de la commande #{selectedCart.id?.slice(-8)}
-                </h3>
-                <button
-                  onClick={closeModal}
-                  className="text-gray-400 hover:text-gray-600"
-                >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm overflow-y-auto h-full w-full z-50 flex items-start justify-center pt-10 pb-10">
+          <div className="relative w-11/12 md:w-3/4 lg:w-1/2 bg-white rounded-2xl shadow-xl border border-gray-100 max-h-[90vh] overflow-y-auto">
+            {/* En-tête du modal */}
+            <div className="sticky top-0 bg-white/90 backdrop-blur-sm border-b border-gray-100 px-6 py-4 flex items-center justify-between rounded-t-2xl z-10">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 bg-emerald-50 rounded-xl flex items-center justify-center">
+                  <ShoppingCart className="w-4 h-4 text-emerald-600" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-gray-900">
+                    Commande #{selectedCart.id?.slice(-8)}
+                  </h3>
+                  <p className="text-xs text-gray-400">{formatDate(selectedCart.timestamp)}</p>
+                </div>
               </div>
+              <button
+                onClick={closeModal}
+                className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors"
+              >
+                <X className="w-4 h-4 text-gray-400" />
+              </button>
+            </div>
 
+            <div className="p-6 space-y-6">
               {/* Informations du client */}
-              <div className="mb-6">
-                <h4 className="font-medium text-gray-700 mb-2">👤 Informations client</h4>
-                <div className="bg-gray-50 p-4 rounded-lg">
+              <div>
+                <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                  <User className="w-3.5 h-3.5" />
+                  Informations client
+                </h4>
+                <div className="bg-gray-50/80 p-4 rounded-xl border border-gray-100">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <p className="text-sm text-gray-600">Nom</p>
-                      <p className="font-medium">{selectedCart.client}</p>
+                      <p className="text-xs text-gray-400 mb-0.5">Nom</p>
+                      <p className="text-sm font-semibold text-gray-900">{selectedCart.client}</p>
                     </div>
                     <div>
-                      <p className="text-sm text-gray-600">Téléphone</p>
-                      <p className="font-medium">{selectedCart.phone}</p>
+                      <p className="text-xs text-gray-400 mb-0.5">Téléphone</p>
+                      <p className="text-sm font-semibold text-gray-900 flex items-center gap-1.5">
+                        <Phone className="w-3.5 h-3.5 text-gray-400" />
+                        {selectedCart.phone}
+                      </p>
                     </div>
                     <div>
-                      <p className="text-sm text-gray-600">ID Client</p>
-                      <p className="font-medium">{selectedCart.idClient}</p>
+                      <p className="text-xs text-gray-400 mb-0.5">ID Client</p>
+                      <p className="text-sm font-medium text-gray-600">{selectedCart.idClient}</p>
                     </div>
                     <div>
-                      <p className="text-sm text-gray-600">Statut</p>
-                      <span className={`px-2 py-1 text-xs font-medium rounded-full border ${getStatusColor(selectedCart.status)}`}>
+                      <p className="text-xs text-gray-400 mb-1">Statut</p>
+                      <span className={`inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-lg border ${getStatusColor(selectedCart.status)}`}>
                         {getStatusText(selectedCart.status)}
                       </span>
                     </div>
@@ -759,69 +782,81 @@ const Commandes = () => {
               </div>
 
               {/* Adresse de livraison */}
-              <div className="mb-6">
-                <h4 className="font-medium text-gray-700 mb-2">📍 Adresse de livraison</h4>
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <p className="text-sm text-gray-600 mb-2">{selectedCart.adresse}</p>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs text-gray-500">
-                    <span>Ville: {selectedCart.ville}</span>
-                    <span>Commune: {selectedCart.commune}</span>
-                    <span>Pays: {selectedCart.pays}</span>
-                    <span>Numéro: {selectedCart.numero}</span>
+              <div>
+                <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                  <MapPin className="w-3.5 h-3.5" />
+                  Adresse de livraison
+                </h4>
+                <div className="bg-gray-50/80 p-4 rounded-xl border border-gray-100">
+                  <p className="text-sm text-gray-700 mb-3">{selectedCart.adresse}</p>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <div className="text-xs">
+                      <span className="text-gray-400">Ville</span>
+                      <p className="font-medium text-gray-700">{selectedCart.ville}</p>
+                    </div>
+                    <div className="text-xs">
+                      <span className="text-gray-400">Commune</span>
+                      <p className="font-medium text-gray-700">{selectedCart.commune}</p>
+                    </div>
+                    <div className="text-xs">
+                      <span className="text-gray-400">Pays</span>
+                      <p className="font-medium text-gray-700">{selectedCart.pays}</p>
+                    </div>
+                    <div className="text-xs">
+                      <span className="text-gray-400">Numéro</span>
+                      <p className="font-medium text-gray-700">{selectedCart.numero}</p>
+                    </div>
                   </div>
                 </div>
               </div>
 
               {/* Produits */}
-              <div className="mb-6">
-                <h4 className="font-medium text-gray-700 mb-2">🛍️ Produits commandés</h4>
-                <div className="space-y-3">
+              <div>
+                <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                  <Package className="w-3.5 h-3.5" />
+                  Produits commandés ({selectedCart.items.length})
+                </h4>
+                <div className="space-y-2">
                   {selectedCart.items.map((item, index) => (
-                    <div key={index} className="flex items-center space-x-4 p-3 bg-gray-50 rounded-lg">
+                    <div key={index} className="flex items-center gap-3 p-3 bg-gray-50/80 rounded-xl border border-gray-100">
                       {item.imagePath && (
                         <img 
                           src={item.imagePath} 
                           alt={item.name}
-                          className="w-12 h-12 rounded object-cover"
+                          className="w-11 h-11 rounded-lg object-cover flex-shrink-0"
                           onError={(e) => {
                             e.currentTarget.style.display = 'none';
                           }}
                         />
                       )}
-                      <div className="flex-1">
-                        <h5 className="font-medium text-gray-800">{item.name}</h5>
-                        <p className="text-sm text-gray-600">Catégorie: {item.category}</p>
-                        <div className="flex items-center space-x-4 mt-1 text-xs text-gray-500">
-                          <span>Quantité: {item.quantity}</span>
-                          <span>Prix unitaire: {formatPrice(item.price)}</span>
-                          <span>Vendeur ID: {item.idVendeur}</span>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-gray-900 truncate">{item.name}</p>
+                        <div className="flex items-center gap-3 mt-0.5">
+                          <span className="text-xs text-gray-400">Qté: {item.quantity}</span>
+                          <span className="text-xs text-gray-400">{formatPrice(item.price)}/unité</span>
                         </div>
                       </div>
-                      <div className="text-right">
-                        <p className="font-semibold text-gray-800">
-                          {formatPrice(item.price * item.quantity)}
-                        </p>
-                      </div>
+                      <p className="text-sm font-bold text-gray-900 flex-shrink-0">
+                        {formatPrice(item.price * item.quantity)}
+                      </p>
                     </div>
                   ))}
                 </div>
               </div>
 
               {/* Total et actions */}
-              <div className="flex items-center justify-between pt-4 border-t">
+              <div className="flex items-center justify-between pt-4 border-t border-gray-100">
                 <div>
-                  <p className="text-lg font-bold text-green-600">
-                    Total: {formatPrice(selectedCart.total)}
-                  </p>
-                  <p className="text-sm text-gray-500">
-                    {formatDate(selectedCart.timestamp)}
+                  <p className="text-xs text-gray-400">Total de la commande</p>
+                  <p className="text-xl font-extrabold text-emerald-600">
+                    {formatPrice(selectedCart.total)}
                   </p>
                 </div>
-                <div className="flex space-x-2">
-                  <button className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition">
+                <div className="flex gap-2">
+                  <button className="px-4 py-2.5 text-sm font-medium bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-colors">
                     Confirmer
                   </button>
-                  <button className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition">
+                  <button className="px-4 py-2.5 text-sm font-medium bg-red-50 text-red-600 border border-red-200 rounded-xl hover:bg-red-100 transition-colors">
                     Annuler
                   </button>
                 </div>
@@ -833,66 +868,74 @@ const Commandes = () => {
 
       {/* Modal de statistiques détaillées */}
       {showStatsModal && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-10 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white max-h-[90vh] overflow-y-auto">
-            <div className="mt-3">
-              {/* En-tête du modal */}
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xl font-semibold text-gray-900">
-                  Statistiques détaillées des commandes
-                </h3>
-                <button
-                  onClick={closeStatsModal}
-                  className="text-gray-400 hover:text-gray-600"
-                >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
-
-              {/* Statistiques générales */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                  <h4 className="text-sm font-medium text-blue-700">Total Commandes</h4>
-                  <p className="text-2xl font-bold text-blue-600">{filteredCarts.length}</p>
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm overflow-y-auto h-full w-full z-50 flex items-start justify-center pt-10 pb-10">
+          <div className="relative w-11/12 md:w-3/4 lg:w-1/2 bg-white rounded-2xl shadow-xl border border-gray-100 max-h-[90vh] overflow-y-auto">
+            {/* En-tête du modal */}
+            <div className="sticky top-0 bg-white/90 backdrop-blur-sm border-b border-gray-100 px-6 py-4 flex items-center justify-between rounded-t-2xl z-10">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 bg-emerald-50 rounded-xl flex items-center justify-center">
+                  <BarChart3 className="w-4 h-4 text-emerald-600" />
                 </div>
-                <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
-                  <h4 className="text-sm font-medium text-yellow-700">En Attente</h4>
-                  <p className="text-2xl font-bold text-yellow-600">
+                <h3 className="text-base font-bold text-gray-900">Statistiques détaillées</h3>
+              </div>
+              <button
+                onClick={closeStatsModal}
+                className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors"
+              >
+                <X className="w-4 h-4 text-gray-400" />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-6">
+              {/* Statistiques générales */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <div className="relative overflow-hidden bg-emerald-50/50 p-4 rounded-xl border border-emerald-100">
+                  <div className="absolute -top-2 -right-2 w-10 h-10 bg-emerald-100 rounded-full opacity-50" />
+                  <p className="text-xs font-medium text-gray-400 uppercase tracking-wider">Total</p>
+                  <p className="text-xl font-extrabold text-gray-900 mt-0.5">{filteredCarts.length}</p>
+                </div>
+                <div className="relative overflow-hidden bg-amber-50/50 p-4 rounded-xl border border-amber-100">
+                  <div className="absolute -top-2 -right-2 w-10 h-10 bg-amber-100 rounded-full opacity-50" />
+                  <p className="text-xs font-medium text-gray-400 uppercase tracking-wider">En Attente</p>
+                  <p className="text-xl font-extrabold text-gray-900 mt-0.5">
                     {filteredCarts.filter(cart => cart.status === 'pending').length}
                   </p>
                 </div>
-                <div className="bg-green-50 p-4 rounded-lg border border-green-200">
-                  <h4 className="text-sm font-medium text-green-700">Livrées</h4>
-                  <p className="text-2xl font-bold text-green-600">
+                <div className="relative overflow-hidden bg-green-50/50 p-4 rounded-xl border border-green-100">
+                  <div className="absolute -top-2 -right-2 w-10 h-10 bg-green-100 rounded-full opacity-50" />
+                  <p className="text-xs font-medium text-gray-400 uppercase tracking-wider">Livrées</p>
+                  <p className="text-xl font-extrabold text-gray-900 mt-0.5">
                     {filteredCarts.filter(cart => cart.status === 'delivered').length}
                   </p>
                 </div>
-                <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
-                  <h4 className="text-sm font-medium text-purple-700">Chiffre d'affaires</h4>
-                  <p className="text-md font-bold text-purple-600">
+                <div className="relative overflow-hidden bg-blue-50/50 p-4 rounded-xl border border-blue-100">
+                  <div className="absolute -top-2 -right-2 w-10 h-10 bg-blue-100 rounded-full opacity-50" />
+                  <p className="text-xs font-medium text-gray-400 uppercase tracking-wider">CA</p>
+                  <p className="text-sm font-extrabold text-gray-900 mt-0.5">
                     {formatPrice(filteredCarts.reduce((total, cart) => total + cart.total, 0))}
                   </p>
                 </div>
               </div>
 
               {/* Statistiques par statut */}
-              <div className="mb-6">
-                <h4 className="font-medium text-gray-700 mb-3">📈 Répartition par statut</h4>
-                <div className="space-y-3">
+              <div>
+                <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                  <BarChart3 className="w-3.5 h-3.5" />
+                  Répartition par statut
+                </h4>
+                <div className="space-y-2">
                   {['pending', 'delivered', 'cancelled', 'en route pour livraison', 'prêt à expédier', 'colis en cours de préparation', 'rejected'].map(status => {
                     const count = filteredCarts.filter(cart => cart.status === status).length;
                     const percentage = filteredCarts.length > 0 ? ((count / filteredCarts.length) * 100).toFixed(1) : '0';
                     return (
-                      <div key={status} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                        <div className="flex items-center space-x-3">
-                          <span className={`px-2 py-1 text-xs font-medium rounded-full border ${getStatusColor(status)}`}>
+                      <div key={status} className="flex items-center justify-between p-3 bg-gray-50/80 rounded-xl border border-gray-100">
+                        <div className="flex items-center gap-3">
+                          <span className={`inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-lg border ${getStatusColor(status)}`}>
                             {getStatusText(status)}
                           </span>
-                          <span className="text-sm text-gray-600">{count} commandes</span>
+                          <span className="text-xs text-gray-500">{count} commandes</span>
                         </div>
-                        <span className="text-sm font-medium text-gray-700">{percentage}%</span>
+                        <span className="text-xs font-bold text-gray-700">{percentage}%</span>
                       </div>
                     );
                   })}
@@ -900,12 +943,15 @@ const Commandes = () => {
               </div>
 
               {/* Statistiques par période */}
-              <div className="mb-6">
-                <h4 className="font-medium text-gray-700 mb-3">📅 Statistiques par période</h4>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="bg-gray-50 p-4 rounded-lg">
-                    <h5 className="text-sm font-medium text-gray-700 mb-2">Aujourd'hui</h5>
-                    <p className="text-lg font-bold text-gray-800">
+              <div>
+                <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                  <Calendar className="w-3.5 h-3.5" />
+                  Par période
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <div className="bg-gray-50/80 p-4 rounded-xl border border-gray-100">
+                    <p className="text-xs text-gray-400 mb-1">Aujourd'hui</p>
+                    <p className="text-lg font-extrabold text-gray-900">
                       {filteredCarts.filter(cart => {
                         const today = new Date();
                         const cartDate = new Date(cart.timestamp);
@@ -913,9 +959,9 @@ const Commandes = () => {
                       }).length}
                     </p>
                   </div>
-                  <div className="bg-gray-50 p-4 rounded-lg">
-                    <h5 className="text-sm font-medium text-gray-700 mb-2">Cette semaine</h5>
-                    <p className="text-lg font-bold text-gray-800">
+                  <div className="bg-gray-50/80 p-4 rounded-xl border border-gray-100">
+                    <p className="text-xs text-gray-400 mb-1">Cette semaine</p>
+                    <p className="text-lg font-extrabold text-gray-900">
                       {filteredCarts.filter(cart => {
                         const now = new Date();
                         const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
@@ -924,9 +970,9 @@ const Commandes = () => {
                       }).length}
                     </p>
                   </div>
-                  <div className="bg-gray-50 p-4 rounded-lg">
-                    <h5 className="text-sm font-medium text-gray-700 mb-2">Ce mois</h5>
-                    <p className="text-lg font-bold text-gray-800">
+                  <div className="bg-gray-50/80 p-4 rounded-xl border border-gray-100">
+                    <p className="text-xs text-gray-400 mb-1">Ce mois</p>
+                    <p className="text-lg font-extrabold text-gray-900">
                       {filteredCarts.filter(cart => {
                         const now = new Date();
                         const cartDate = new Date(cart.timestamp);
@@ -938,8 +984,11 @@ const Commandes = () => {
               </div>
 
               {/* Top clients */}
-              <div className="mb-6">
-                <h4 className="font-medium text-gray-700 mb-3">👥 Top clients</h4>
+              <div>
+                <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                  <User className="w-3.5 h-3.5" />
+                  Top clients
+                </h4>
                 <div className="space-y-2">
                   {(() => {
                     const clientStats = filteredCarts.reduce((acc, cart) => {
@@ -955,12 +1004,17 @@ const Commandes = () => {
                       .sort(([, a], [, b]) => b.total - a.total)
                       .slice(0, 5)
                       .map(([client, stats]) => (
-                        <div key={client} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                          <div>
-                            <p className="font-medium text-gray-800">{client}</p>
-                            <p className="text-sm text-gray-600">{stats.count} commandes</p>
+                        <div key={client} className="flex items-center justify-between p-3 bg-gray-50/80 rounded-xl border border-gray-100">
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 bg-emerald-50 rounded-lg flex items-center justify-center">
+                              <User className="w-4 h-4 text-emerald-600" />
+                            </div>
+                            <div>
+                              <p className="text-sm font-semibold text-gray-900">{client}</p>
+                              <p className="text-xs text-gray-400">{stats.count} commandes</p>
+                            </div>
                           </div>
-                          <p className="font-bold text-green-600">{formatPrice(stats.total)}</p>
+                          <p className="text-sm font-bold text-emerald-600">{formatPrice(stats.total)}</p>
                         </div>
                       ));
                   })()}
@@ -968,10 +1022,10 @@ const Commandes = () => {
               </div>
 
               {/* Actions */}
-              <div className="flex items-center justify-end space-x-2 pt-4 border-t">
+              <div className="flex items-center justify-end gap-2 pt-4 border-t border-gray-100">
                 <button
                   onClick={closeStatsModal}
-                  className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 transition"
+                  className="px-4 py-2.5 text-sm font-medium text-gray-600 bg-gray-50 border border-gray-200 rounded-xl hover:bg-gray-100 transition-colors"
                 >
                   Fermer
                 </button>
@@ -980,8 +1034,9 @@ const Commandes = () => {
                     exportToExcel();
                     closeStatsModal();
                   }}
-                  className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition"
+                  className="inline-flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-colors"
                 >
+                  <Download className="w-4 h-4" />
                   Exporter les données
                 </button>
               </div>

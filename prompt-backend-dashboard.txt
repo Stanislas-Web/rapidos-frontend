@@ -1,0 +1,628 @@
+ stp================================================================================
+PROMPT POUR IMPLEMENTER LES ENDPOINTS DASHBOARD DANS LE BACKEND
+================================================================================
+
+CONTEXTE :
+----------
+J'ai un dashboard admin frontend (React + TypeScript) qui lit actuellement 
+des données directement depuis Firebase Firestore (collections "carts" et "status"). 
+Je veux migrer toute cette logique vers mon backend API.
+
+Mon backend tourne sur : http://24.144.87.127:3333
+Le frontend utilise déjà l'API pour certaines routes :
+  - GET /vendeurs (liste des vendeurs avec leurs produits)
+  - GET /ecommerce/commandes/admin/all?page=1&limit=20&status=pending
+
+Le frontend utilise un token Bearer pour l'authentification (stocké dans localStorage).
+
+DONNÉES FIREBASE ACTUELLES :
+-----------------------------
+
+1. Collection "carts" (commandes) - champs :
+   - client (string) : nom du client
+   - idClient (string) : identifiant unique du client
+   - phone (string) : téléphone du client
+   - adresse (string) : adresse de livraison
+   - avenue (string)
+   - quartier (string)
+   - commune (string)
+   - ville (string)
+   - pays (string)
+   - numero (string)
+   - latitude (number)
+   - longitude (number)
+   - items (array) : liste des produits commandés
+     Chaque item contient :
+       - id (number)
+       - name (string)
+       - price (number)
+       - quantity (number)
+       - stock (number)
+       - category (string)
+       - idVendeur (string)
+       - imagePath (string)
+   - total (number) : montant total de la commande
+   - status (string) : statut de la commande
+   - timestamp (Firestore Timestamp) : date de la commande
+
+2. Collection "status" (statut des utilisateurs/livreurs) - champs :
+   - role (string) : "livreur", "vendeur", etc.
+   - status (boolean) : actif ou non
+   - lastUpdated (Firestore Timestamp)
+
+STATUTS POSSIBLES DES COMMANDES :
+  - "pending" (En attente)
+  - "delivered" (Livrée)
+  - "cancelled" (Annulée)
+  - "en route pour livraison"
+  - "prêt à expédier"
+  - "colis en cours de préparation"
+  - "rejected" (Rejetée)
+
+
+================================================================================
+ENDPOINTS A CREER
+================================================================================
+
+
+1. GET /ecommerce/dashboard/stats
+---------------------------------
+Retourne les statistiques globales du dashboard.
+
+Réponse attendue :
+{
+  "clients": 150,
+  "transactions": 320,
+  "produits": 85,
+  "livreurs": 42,
+  "vendeurs": 35
+}
+
+Logique :
+  - clients : nombre de clients uniques (SELECT COUNT(DISTINCT idClient) FROM commandes)
+  - transactions : nombre total de commandes (SELECT COUNT(*) FROM commandes)
+  - produits : nombre total de produits (depuis la table produits ou via /vendeurs)
+  - livreurs : nombre de livreurs (depuis la table status WHERE role = 'livreur', 
+    ou depuis ta propre table users WHERE role = 'livreur')
+  - vendeurs : nombre de vendeurs (SELECT COUNT(*) FROM vendeurs)
+
+
+2. GET /ecommerce/dashboard/recent-orders?limit=6
+--------------------------------------------------
+Retourne les N commandes les plus récentes, triées par date décroissante.
+
+Réponse attendue :
+{
+  "data": [
+    {
+      "id": "abc123",
+      "client": "Jean Dupont",
+      "idClient": "client_001",
+      "phone": "+243812345678",
+      "adresse": "123 Avenue de la Paix",
+      "avenue": "Avenue de la Paix",
+      "quartier": "Gombe",
+      "commune": "Gombe",
+      "ville": "Kinshasa",
+      "pays": "RDC",
+      "numero": "123",
+      "latitude": -4.325,
+      "longitude": 15.322,
+      "items": [
+        {
+          "id": 1,
+          "name": "Produit A",
+          "price": 5000,
+          "quantity": 2,
+          "stock": 10,
+          "category": "Alimentation",
+          "idVendeur": "5",
+          "imagePath": "https://example.com/image.jpg"
+        }
+      ],
+      "total": 10000,
+      "status": "pending",
+      "timestamp": "2026-03-05T10:30:00Z"
+    }
+  ]
+}
+
+Logique :
+  - SELECT * FROM commandes ORDER BY timestamp DESC LIMIT :limit
+  - Inclure les items (produits) de chaque commande
+  - Le paramètre "limit" est optionnel, défaut = 6
+
+
+3. GET /ecommerce/dashboard/weekly-sales
+-----------------------------------------
+Retourne les données de ventes groupées par semaine (8 dernières semaines).
+
+Réponse attendue :
+{
+  "data": [
+    { "week": "17/2 - 23/2", "commandes": 45, "montant": 250000 },
+    { "week": "24/2 - 2/3", "commandes": 52, "montant": 310000 },
+    { "week": "3/3 - 9/3", "commandes": 38, "montant": 195000 }
+  ]
+}
+
+Logique :
+  - Récupérer les commandes des 8 dernières semaines (56 jours)
+  - Grouper par semaine (début de semaine = dimanche)
+  - Pour chaque semaine :
+    - commandes = COUNT(*) des commandes de cette semaine
+    - montant = SUM(total) des commandes de cette semaine
+  - Formater la semaine en "jour/mois - jour/mois"
+  - Trier par date croissante
+
+Exemple SQL :
+  SELECT 
+    DATE_TRUNC('week', timestamp) as week_start,
+    COUNT(*) as commandes,
+    SUM(total) as montant
+  FROM commandes
+  WHERE timestamp >= NOW() - INTERVAL '56 days'
+  GROUP BY DATE_TRUNC('week', timestamp)
+  ORDER BY week_start ASC
+
+
+4. GET /ecommerce/dashboard/vendor-orders
+------------------------------------------
+Retourne les commandes/montants groupés par vendeur (top 8).
+
+Réponse attendue :
+{
+  "data": [
+    { "vendeur": "Vendeur 5", "commandes": 120, "montant": 580000 },
+    { "vendeur": "Vendeur 3", "commandes": 95, "montant": 420000 },
+    { "vendeur": "Vendeur 1", "commandes": 78, "montant": 350000 }
+  ]
+}
+
+Logique :
+  - Parcourir les items de chaque commande
+  - Grouper par idVendeur
+  - Pour chaque vendeur :
+    - commandes = SUM(quantity) de tous les items du vendeur
+    - montant = SUM(price * quantity) de tous les items du vendeur
+  - Trier par montant décroissant
+  - Garder le top 8
+
+Si tu as les items dans une table séparée (commande_items) :
+  SELECT 
+    ci.idVendeur,
+    CONCAT('Vendeur ', ci.idVendeur) as vendeur,
+    SUM(ci.quantity) as commandes,
+    SUM(ci.price * ci.quantity) as montant
+  FROM commande_items ci
+  GROUP BY ci.idVendeur
+  ORDER BY montant DESC
+  LIMIT 8
+
+Si les items sont stockés en JSON dans la colonne "items" de la table commandes :
+  Tu devras parser le JSON et agréger côté application.
+
+
+================================================================================
+NOTES IMPORTANTES
+================================================================================
+
+1. AUTHENTIFICATION :
+   Tous les endpoints doivent être protégés par authentification Bearer token.
+   Le frontend envoie : Authorization: Bearer <token>
+
+2. OPTION 1 - Lire depuis Firebase côté serveur :
+   Tu peux utiliser le Firebase Admin SDK (npm install firebase-admin) dans ton 
+   backend pour continuer de lire depuis Firestore. Cela permet une migration 
+   progressive sans toucher à la base de données.
+
+   const admin = require('firebase-admin');
+   admin.initializeApp({
+     credential: admin.credential.cert(serviceAccountKey)
+   });
+   const db = admin.firestore();
+   
+   // Exemple : récupérer les commandes récentes
+   const snapshot = await db.collection('carts')
+     .orderBy('timestamp', 'desc')
+     .limit(6)
+     .get();
+
+3. OPTION 2 - Migrer vers ta base de données (PostgreSQL/MySQL) :
+   Créer les tables nécessaires et migrer les données depuis Firebase.
+   C'est la meilleure solution à long terme.
+
+   Tables à créer :
+   - commandes (id, client, idClient, phone, adresse, avenue, quartier, 
+     commune, ville, pays, numero, latitude, longitude, total, status, 
+     timestamp, created_at, updated_at)
+   - commande_items (id, commande_id, product_id, name, price, quantity, 
+     stock, category, idVendeur, imagePath)
+   - livreurs (ou utiliser la table users avec un champ role)
+
+4. FORMAT DES DATES :
+   Retourner les dates au format ISO 8601 : "2026-03-05T10:30:00Z"
+   Le frontend les convertira en objets Date JavaScript.
+
+5. CORS :
+   S'assurer que le backend accepte les requêtes depuis le domaine du frontend.
+
+6. CONFIG FIREBASE (si tu utilises l'option 1) :
+   - Project ID : rapidos-21203
+   - Tu auras besoin de générer une clé de compte de service depuis 
+     Firebase Console > Paramètres du projet > Comptes de service > 
+     Générer une nouvelle clé privée
+
+
+================================================================================
+RÉSUMÉ DES 4 ENDPOINTS
+================================================================================
+
+GET /ecommerce/dashboard/stats           -> Stats globales (clients, transactions, produits, livreurs, vendeurs)
+GET /ecommerce/dashboard/recent-orders   -> 6 dernières commandes
+GET /ecommerce/dashboard/weekly-sales    -> Ventes par semaine (8 semaines)
+GET /ecommerce/dashboard/vendor-orders   -> Top 8 vendeurs par montant
+
+================================================================================
+
+
+
+================================================================================
+PROMPT POUR IMPLEMENTER L'ENDPOINT ADMIN COMMANDES E-COMMERCE
+================================================================================
+
+CONTEXTE :
+----------
+J'ai une page admin "Commandes" dans mon frontend React + TypeScript qui affiche 
+toutes les commandes e-commerce avec pagination, filtrage par statut, recherche, 
+et détails de chaque commande.
+
+Le frontend appelle : GET /ecommerce/commandes/admin/all
+Mon backend tourne sur : http://24.144.87.127:3333
+Authentification : Bearer token dans le header Authorization.
+
+
+================================================================================
+ENDPOINT PRINCIPAL
+================================================================================
+
+GET /ecommerce/commandes/admin/all
+-----------------------------------
+
+Paramètres query :
+  - page (number, optionnel, défaut: 1) : numéro de la page
+  - limit (number, optionnel, défaut: 20) : nombre de commandes par page
+  - status (string, optionnel) : filtrer par statut de commande
+
+Exemples d'appels :
+  GET /ecommerce/commandes/admin/all?page=1&limit=20
+  GET /ecommerce/commandes/admin/all?page=2&limit=20&status=pending
+  GET /ecommerce/commandes/admin/all?page=1&limit=20&status=delivered
+
+STATUTS POSSIBLES :
+  - "pending"                          (En attente)
+  - "colis en cours de préparation"    (En préparation)
+  - "prêt à expédier"                 (Prêt à expédier)
+  - "en route pour livraison"          (En route pour livraison)
+  - "delivered"                        (Livrée)
+  - "cancelled"                        (Annulée)
+  - "rejected"                         (Rejetée)
+
+
+RÉPONSE ATTENDUE :
+------------------
+
+{
+  "data": [
+    {
+      "id": 1,                              // ou "idCommande": 1
+      "client": "Jean Dupont",              // ou "clientName"
+      "idClient": "client_001",
+      "phone": "+243812345678",             // ou "telephone"
+      "adresse": "123 Avenue de la Paix",   // ou "address"
+      "avenue": "Avenue de la Paix",
+      "quartier": "Gombe",
+      "commune": "Gombe",
+      "ville": "Kinshasa",                  // ou "city"
+      "pays": "RDC",                        // ou "country"
+      "numero": "123",
+      "latitude": -4.325,
+      "longitude": 15.322,
+      "items": [                            // ou "products"
+        {
+          "id": 1,
+          "name": "Smartphone Samsung",
+          "price": 25000,
+          "quantity": 2,
+          "stock": 10,
+          "category": "Electronique",
+          "idVendeur": "5",
+          "imagePath": "https://example.com/image.jpg"
+        },
+        {
+          "id": 2,
+          "name": "Écouteurs Bluetooth",
+          "price": 5000,
+          "quantity": 1,
+          "stock": 50,
+          "category": "Accessoires",
+          "idVendeur": "3",
+          "imagePath": "https://example.com/ecouteurs.jpg"
+        }
+      ],
+      "total": 55000,
+      "status": "pending",
+      "timestamp": "2026-03-05T10:30:00Z",  // ou "createdAt"
+    }
+  ],
+  "total": 320,                             // nombre total de commandes (pour pagination)
+  "meta": {                                 // optionnel, alternative pour "total"
+    "total": 320,
+    "page": 1,
+    "limit": 20,
+    "totalPages": 16
+  }
+}
+
+IMPORTANT : Le champ "total" au niveau racine de la réponse (ou "meta.total")
+est OBLIGATOIRE pour que la pagination fonctionne côté frontend.
+Le frontend calcule : totalPages = Math.ceil(total / limit)
+
+
+STRUCTURE DES ITEMS (PRODUITS) :
+--------------------------------
+Chaque élément dans le tableau "items" (ou "products") doit contenir :
+
+{
+  "id": number,           // ID du produit
+  "name": string,         // Nom du produit
+  "price": number,        // Prix unitaire (en CDF)
+  "quantity": number,     // Quantité commandée
+  "stock": number,        // Stock disponible (optionnel, peut être 0)
+  "category": string,     // Catégorie du produit
+  "idVendeur": string,    // ID du vendeur
+  "imagePath": string     // URL de l'image du produit
+}
+
+
+LOGIQUE BACKEND (SQL) :
+------------------------
+
+-- Récupérer les commandes avec pagination et filtre statut
+SELECT 
+  c.id,
+  c.client,
+  c.id_client AS "idClient",
+  c.phone,
+  c.adresse,
+  c.avenue,
+  c.quartier,
+  c.commune,
+  c.ville,
+  c.pays,
+  c.numero,
+  c.latitude,
+  c.longitude,
+  c.total,
+  c.status,
+  c.created_at AS "timestamp"
+FROM commandes c
+WHERE 1=1
+  AND (c.status = :status OR :status IS NULL)  -- filtre optionnel
+ORDER BY c.created_at DESC
+LIMIT :limit
+OFFSET (:page - 1) * :limit;
+
+-- Compter le total pour la pagination
+SELECT COUNT(*) AS total
+FROM commandes c
+WHERE 1=1
+  AND (c.status = :status OR :status IS NULL);
+
+-- Récupérer les items de chaque commande
+SELECT 
+  ci.id,
+  ci.name,
+  ci.price,
+  ci.quantity,
+  ci.stock,
+  ci.category,
+  ci.id_vendeur AS "idVendeur",
+  ci.image_path AS "imagePath"
+FROM commande_items ci
+WHERE ci.commande_id = :commandeId;
+
+ALTERNATIVE : Si les items sont stockés en JSON dans la colonne "items" :
+SELECT 
+  c.*,
+  c.items::json AS items   -- PostgreSQL
+FROM commandes c
+ORDER BY c.created_at DESC
+LIMIT :limit OFFSET :offset;
+
+
+TABLES À CRÉER (si pas encore fait) :
+--------------------------------------
+
+CREATE TABLE commandes (
+  id SERIAL PRIMARY KEY,
+  client VARCHAR(255) NOT NULL,
+  id_client VARCHAR(100) NOT NULL,
+  phone VARCHAR(50),
+  adresse TEXT,
+  avenue VARCHAR(255),
+  quartier VARCHAR(255),
+  commune VARCHAR(255),
+  ville VARCHAR(255),
+  pays VARCHAR(100),
+  numero VARCHAR(50),
+  latitude DECIMAL(10, 7),
+  longitude DECIMAL(10, 7),
+  total DECIMAL(12, 2) NOT NULL DEFAULT 0,
+  status VARCHAR(100) NOT NULL DEFAULT 'pending',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE commande_items (
+  id SERIAL PRIMARY KEY,
+  commande_id INTEGER NOT NULL REFERENCES commandes(id) ON DELETE CASCADE,
+  product_id INTEGER,
+  name VARCHAR(255) NOT NULL,
+  price DECIMAL(12, 2) NOT NULL,
+  quantity INTEGER NOT NULL DEFAULT 1,
+  stock INTEGER DEFAULT 0,
+  category VARCHAR(255),
+  id_vendeur VARCHAR(100),
+  image_path TEXT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Index pour les performances
+CREATE INDEX idx_commandes_status ON commandes(status);
+CREATE INDEX idx_commandes_created_at ON commandes(created_at DESC);
+CREATE INDEX idx_commandes_id_client ON commandes(id_client);
+CREATE INDEX idx_commande_items_commande_id ON commande_items(commande_id);
+
+
+EXEMPLE D'IMPLÉMENTATION (Node.js / AdonisJS) :
+-------------------------------------------------
+
+// routes.ts
+Route.get('/ecommerce/commandes/admin/all', 'CommandesController.index')
+  .middleware('auth')
+
+// CommandesController.ts
+import { HttpContextContract } from '@ioc:Adonis/Core/HttpContext'
+import Database from '@ioc:Adonis/Lucid/Database'
+
+export default class CommandesController {
+  public async index({ request, response }: HttpContextContract) {
+    const page = request.input('page', 1)
+    const limit = request.input('limit', 20)
+    const status = request.input('status')
+
+    // Query builder
+    let query = Database.from('commandes').orderBy('created_at', 'desc')
+
+    // Filtre par statut (si fourni et pas "all")
+    if (status && status !== 'all') {
+      query = query.where('status', status)
+    }
+
+    // Pagination
+    const commandes = await query.paginate(page, limit)
+
+    // Pour chaque commande, récupérer les items
+    const data = await Promise.all(
+      commandes.all().map(async (commande) => {
+        const items = await Database.from('commande_items')
+          .where('commande_id', commande.id)
+        
+        return {
+          id: commande.id,
+          client: commande.client,
+          idClient: commande.id_client,
+          phone: commande.phone,
+          adresse: commande.adresse,
+          avenue: commande.avenue,
+          quartier: commande.quartier,
+          commune: commande.commune,
+          ville: commande.ville,
+          pays: commande.pays,
+          numero: commande.numero,
+          latitude: commande.latitude,
+          longitude: commande.longitude,
+          total: commande.total,
+          status: commande.status,
+          timestamp: commande.created_at,
+          items: items.map(item => ({
+            id: item.product_id || item.id,
+            name: item.name,
+            price: item.price,
+            quantity: item.quantity,
+            stock: item.stock || 0,
+            category: item.category || '',
+            idVendeur: item.id_vendeur || '',
+            imagePath: item.image_path || ''
+          }))
+        }
+      })
+    )
+
+    return response.json({
+      data,
+      total: commandes.total,
+      meta: {
+        total: commandes.total,
+        page: commandes.currentPage,
+        limit: commandes.perPage,
+        totalPages: commandes.lastPage
+      }
+    })
+  }
+}
+
+
+ALTERNATIVE AVEC FIREBASE ADMIN SDK :
+---------------------------------------
+
+// Si tu veux continuer à lire depuis Firestore côté serveur
+
+const admin = require('firebase-admin')
+const db = admin.firestore()
+
+async function getCommandes(page, limit, status) {
+  let query = db.collection('carts').orderBy('timestamp', 'desc')
+
+  // Filtre par statut
+  if (status && status !== 'all') {
+    query = query.where('status', '==', status)
+  }
+
+  // Récupérer toutes les commandes (Firestore ne supporte pas OFFSET natif)
+  const snapshot = await query.get()
+  const allDocs = snapshot.docs.map(doc => ({
+    id: doc.id,
+    ...doc.data(),
+    timestamp: doc.data().timestamp?.toDate()?.toISOString()
+  }))
+
+  // Pagination manuelle
+  const total = allDocs.length
+  const offset = (page - 1) * limit
+  const data = allDocs.slice(offset, offset + limit)
+
+  return { data, total }
+}
+
+
+NOTES :
+-------
+1. La réponse doit être triée par date décroissante (commandes récentes en premier)
+2. Le champ "total" (nombre total pour pagination) est CRUCIAL
+3. Le frontend accepte les noms de champs suivants (avec fallback) :
+   - id OU idCommande
+   - client OU clientName
+   - phone OU telephone
+   - adresse OU address
+   - ville OU city
+   - pays OU country
+   - items OU products
+   - timestamp OU createdAt
+4. Les prix sont en CDF (Franc Congolais)
+5. Le frontend affiche 20 commandes par page par défaut
+6. L'endpoint doit être protégé par authentification (Bearer token)
+
+================================================================================
+RÉSUMÉ
+================================================================================
+
+GET /ecommerce/commandes/admin/all?page=1&limit=20&status=pending
+
+-> Retourne la liste paginée des commandes e-commerce
+-> Filtre optionnel par statut
+-> Chaque commande inclut ses items/produits
+-> Total obligatoire pour la pagination
+
+================================================================================

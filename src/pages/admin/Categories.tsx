@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import api from '../../utils/api';
+import { Tags, FolderOpen, CheckCircle, Clock, Search, X, Plus, Edit3, Trash2, AlertCircle, Hash, Calendar, FileText } from 'lucide-react';
 
 type CategoryType = {
   id: number;
@@ -184,72 +185,111 @@ const Categories = () => {
   };
 
   return (
-    <div className="space-y-6 p-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-800">Gestion des Catégories</h1>
+    <div className="space-y-6 p-4 md:p-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-3">
+            <div className="p-2 bg-emerald-100 rounded-xl">
+              <Tags className="w-6 h-6 text-emerald-600" />
+            </div>
+            Gestion des Catégories
+          </h1>
+          <p className="text-sm text-gray-500 mt-1 ml-14">Organiser et gérer les catégories de produits</p>
+        </div>
         <button
           onClick={() => {
             setFormData({ name: '', description: '' });
             setShowCreateModal(true);
           }}
-          className="bg-[#3A905B] text-white px-4 py-2 rounded-lg hover:bg-[#327C4E] transition flex items-center space-x-2"
+          className="inline-flex items-center gap-2 bg-emerald-600 text-white px-5 py-2.5 rounded-xl hover:bg-emerald-700 transition-all duration-200 font-medium text-sm shadow-sm shadow-emerald-600/20 hover:shadow-md"
         >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
-          <span>Nouvelle catégorie</span>
+          <Plus className="w-4 h-4" />
+          Nouvelle catégorie
         </button>
       </div>
 
       {error && !showCreateModal && !showEditModal && !showDeleteModal && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
-          {error}
+        <div className="flex items-center gap-3 bg-red-50 border border-red-200 text-red-700 px-5 py-4 rounded-2xl">
+          <AlertCircle className="w-5 h-5 flex-shrink-0" />
+          <span className="font-medium">{error}</span>
         </div>
       )}
 
       {loading ? (
-        <div className="flex items-center justify-center p-8">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
-          <span className="ml-2 text-gray-600">Chargement des catégories...</span>
+        <div className="flex flex-col items-center justify-center p-16 bg-white rounded-2xl border border-gray-100 shadow-sm">
+          <div className="animate-spin rounded-full h-10 w-10 border-[3px] border-emerald-200 border-t-emerald-600"></div>
+          <span className="mt-4 text-gray-500 font-medium">Chargement des catégories...</span>
         </div>
       ) : (
         <div className="space-y-6">
           {/* Statistiques */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="bg-white p-4 rounded-lg border shadow-sm">
-              <h3 className="text-lg font-semibold text-gray-700">Total Catégories</h3>
-              <p className="text-2xl font-bold text-indigo-600">{filteredCategories.length}</p>
+            <div className="relative overflow-hidden bg-white p-5 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow duration-300">
+              <div className="absolute -top-3 -right-3 w-16 h-16 bg-emerald-50 rounded-full" />
+              <div className="relative flex items-center gap-4">
+                <div className="w-11 h-11 bg-emerald-50 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <Tags className="w-5 h-5 text-emerald-600" />
+                </div>
+                <div>
+                  <p className="text-xs font-medium text-gray-400 uppercase tracking-wider">Total Catégories</p>
+                  <p className="text-2xl font-extrabold text-gray-900 mt-0.5">{filteredCategories.length}</p>
+                </div>
+              </div>
             </div>
-            <div className="bg-white p-4 rounded-lg border shadow-sm">
-              <h3 className="text-lg font-semibold text-gray-700">Catégories Actives</h3>
-              <p className="text-2xl font-bold text-green-600">{filteredCategories.length}</p>
+            <div className="relative overflow-hidden bg-white p-5 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow duration-300">
+              <div className="absolute -top-3 -right-3 w-16 h-16 bg-blue-50 rounded-full" />
+              <div className="relative flex items-center gap-4">
+                <div className="w-11 h-11 bg-blue-50 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <CheckCircle className="w-5 h-5 text-blue-600" />
+                </div>
+                <div>
+                  <p className="text-xs font-medium text-gray-400 uppercase tracking-wider">Catégories Actives</p>
+                  <p className="text-2xl font-extrabold text-gray-900 mt-0.5">{filteredCategories.length}</p>
+                </div>
+              </div>
             </div>
-            <div className="bg-white p-4 rounded-lg border shadow-sm">
-              <h3 className="text-lg font-semibold text-gray-700">Dernière Mise à jour</h3>
-              <p className="text-sm text-gray-600">
-                {categories.length > 0 ? formatDate(categories[0].updatedAt) : 'N/A'}
-              </p>
+            <div className="relative overflow-hidden bg-white p-5 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow duration-300">
+              <div className="absolute -top-3 -right-3 w-16 h-16 bg-amber-50 rounded-full" />
+              <div className="relative flex items-center gap-4">
+                <div className="w-11 h-11 bg-amber-50 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <Clock className="w-5 h-5 text-amber-600" />
+                </div>
+                <div>
+                  <p className="text-xs font-medium text-gray-400 uppercase tracking-wider">Dernière Mise à jour</p>
+                  <p className="text-lg font-bold text-gray-900 mt-0.5">
+                    {categories.length > 0 ? formatDate(categories[0].updatedAt) : 'N/A'}
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
 
           {/* Barre de recherche */}
-          <div className="bg-white p-4 rounded-lg border shadow-sm">
+          <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm">
             <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
+              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                <Search className="h-5 w-5 text-gray-400" />
               </div>
               <input
                 type="text"
                 placeholder="Rechercher par nom ou description..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
+                className="block w-full pl-12 pr-10 py-3 border border-gray-200 rounded-xl leading-5 bg-gray-50 placeholder-gray-400 focus:outline-none focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
               />
+              {searchTerm && (
+                <button
+                  onClick={() => setSearchTerm('')}
+                  className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              )}
             </div>
             {searchTerm && (
-              <div className="mt-2 text-sm text-gray-600">
+              <div className="mt-2 text-sm text-gray-500 flex items-center gap-1.5 pl-1">
+                <Search className="w-3.5 h-3.5" />
                 {filteredCategories.length} catégorie(s) trouvée(s)
               </div>
             )}
@@ -259,45 +299,50 @@ const Categories = () => {
           <div className="space-y-4">
             {filteredCategories.length > 0 ? (
               filteredCategories.map((category) => (
-                <div key={category.id} className="bg-white rounded-lg border shadow-sm overflow-hidden hover:shadow-md transition-shadow">
+                <div key={category.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-md transition-all duration-200 group">
                   <div className="p-6">
                     <div className="flex items-start justify-between">
-                      <div className="flex items-center space-x-4">
-                        <div className="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center text-2xl">
+                      <div className="flex items-center gap-4">
+                        <div className="w-13 h-13 bg-emerald-50 rounded-2xl flex items-center justify-center text-2xl flex-shrink-0 group-hover:scale-105 transition-transform duration-200">
                           {getCategoryIcon(category.name)}
                         </div>
-                        <div className="flex-1">
-                          <h3 className="text-lg font-semibold text-gray-800 capitalize">
+                        <div className="flex-1 min-w-0">
+                          <h3 className="text-lg font-bold text-gray-800 capitalize">
                             {category.name}
                           </h3>
-                          <p className="text-sm text-gray-600 mt-1">
+                          <p className="text-sm text-gray-500 mt-1 line-clamp-2">
                             {category.description}
                           </p>
-                          <div className="flex items-center space-x-4 mt-2 text-xs text-gray-500">
-                            <span>ID: {category.id}</span>
-                            <span>Créé le: {formatDate(category.createdAt)}</span>
-                            <span>Modifié le: {formatDate(category.updatedAt)}</span>
+                          <div className="flex items-center gap-4 mt-3 flex-wrap">
+                            <span className="inline-flex items-center gap-1.5 text-xs text-gray-400">
+                              <Hash className="w-3 h-3" />
+                              {category.id}
+                            </span>
+                            <span className="inline-flex items-center gap-1.5 text-xs text-gray-400">
+                              <Calendar className="w-3 h-3" />
+                              Créé le {formatDate(category.createdAt)}
+                            </span>
+                            <span className="inline-flex items-center gap-1.5 text-xs text-gray-400">
+                              <Clock className="w-3 h-3" />
+                              Modifié le {formatDate(category.updatedAt)}
+                            </span>
                           </div>
                         </div>
                       </div>
-                      <div className="flex items-center space-x-2">
+                      <div className="flex items-center gap-1 flex-shrink-0 ml-4">
                         <button
                           onClick={() => handleEditClick(category)}
-                          className="text-indigo-600 hover:text-indigo-900 transition-colors p-2"
+                          className="p-2.5 rounded-xl text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 transition-all duration-200"
                           title="Modifier"
                         >
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                          </svg>
+                          <Edit3 className="w-4.5 h-4.5" />
                         </button>
                         <button
                           onClick={() => handleDeleteClick(category)}
-                          className="text-red-600 hover:text-red-900 transition-colors p-2"
+                          className="p-2.5 rounded-xl text-gray-400 hover:text-red-600 hover:bg-red-50 transition-all duration-200"
                           title="Supprimer"
                         >
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                          </svg>
+                          <Trash2 className="w-4.5 h-4.5" />
                         </button>
                       </div>
                     </div>
@@ -305,12 +350,12 @@ const Categories = () => {
                 </div>
               ))
             ) : (
-              <div className="bg-white p-8 rounded-lg border text-center">
-                <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 16.172a4 4 0 015.656 0M9 12h6m-6-4h6m2 5.291A7.962 7.962 0 0112 15c-2.34 0-4.47-.881-6.08-2.33" />
-                </svg>
-                <h3 className="mt-2 text-sm font-medium text-gray-900">Aucune catégorie trouvée</h3>
-                <p className="mt-1 text-sm text-gray-500">
+              <div className="bg-white p-12 rounded-2xl border border-gray-100 shadow-sm text-center">
+                <div className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                  <Search className="w-7 h-7 text-gray-400" />
+                </div>
+                <h3 className="text-base font-semibold text-gray-700">Aucune catégorie trouvée</h3>
+                <p className="mt-1 text-sm text-gray-400 max-w-sm mx-auto">
                   {searchTerm ? `Aucune catégorie ne correspond à "${searchTerm}"` : 'Aucune catégorie disponible'}
                 </p>
               </div>
@@ -321,164 +366,194 @@ const Categories = () => {
 
       {/* Modal de création */}
       {showCreateModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md">
-            <h2 className="text-xl font-bold mb-4">Nouvelle catégorie</h2>
-            {error && (
-              <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-                {error}
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
+            <div className="flex items-center gap-3 px-6 py-4 border-b border-gray-100">
+              <div className="p-2 bg-emerald-50 rounded-xl">
+                <Plus className="w-5 h-5 text-emerald-600" />
               </div>
-            )}
-            <form onSubmit={handleCreate}>
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Nom de la catégorie
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                    placeholder="Ex: Vêtements"
-                  />
+              <h2 className="text-lg font-bold text-gray-800">Nouvelle catégorie</h2>
+            </div>
+            <div className="p-6">
+              {error && (
+                <div className="flex items-center gap-3 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl mb-4 text-sm">
+                  <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                  <span className="font-medium">{error}</span>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Description
-                  </label>
-                  <textarea
-                    required
-                    value={formData.description}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                    placeholder="Description de la catégorie"
-                    rows={3}
-                  />
+              )}
+              <form onSubmit={handleCreate}>
+                <div className="space-y-4">
+                  <div>
+                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider pl-1 mb-1.5 block">
+                      Nom de la catégorie
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={formData.name}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      className="w-full px-4 py-3 border border-gray-200 rounded-xl bg-gray-50 focus:outline-none focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
+                      placeholder="Ex: Vêtements"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider pl-1 mb-1.5 block">
+                      Description
+                    </label>
+                    <textarea
+                      required
+                      value={formData.description}
+                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                      className="w-full px-4 py-3 border border-gray-200 rounded-xl bg-gray-50 focus:outline-none focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all resize-none"
+                      placeholder="Description de la catégorie"
+                      rows={3}
+                    />
+                  </div>
                 </div>
-              </div>
-              <div className="flex justify-end space-x-2 mt-6">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowCreateModal(false);
-                    setFormData({ name: '', description: '' });
-                    setError(null);
-                  }}
-                  className="px-4 py-2 border rounded-lg hover:bg-gray-50"
-                >
-                  Annuler
-                </button>
-                <button
-                  type="submit"
-                  disabled={submitting}
-                  className="px-4 py-2 bg-[#3A905B] text-white rounded-lg hover:bg-[#327C4E] disabled:opacity-50"
-                >
-                  {submitting ? 'Création...' : 'Créer'}
-                </button>
-              </div>
-            </form>
+                <div className="flex justify-end gap-2 mt-6">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowCreateModal(false);
+                      setFormData({ name: '', description: '' });
+                      setError(null);
+                    }}
+                    className="px-4 py-2.5 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors font-medium text-sm text-gray-700"
+                  >
+                    Annuler
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={submitting}
+                    className="inline-flex items-center gap-2 px-5 py-2.5 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-all font-medium text-sm shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <Plus className="w-4 h-4" />
+                    {submitting ? 'Création...' : 'Créer'}
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
         </div>
       )}
 
       {/* Modal d'édition */}
       {showEditModal && selectedCategory && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md">
-            <h2 className="text-xl font-bold mb-4">Modifier la catégorie</h2>
-            {error && (
-              <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-                {error}
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
+            <div className="flex items-center gap-3 px-6 py-4 border-b border-gray-100">
+              <div className="p-2 bg-blue-50 rounded-xl">
+                <Edit3 className="w-5 h-5 text-blue-600" />
               </div>
-            )}
-            <form onSubmit={handleUpdate}>
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Nom de la catégorie
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                  />
+              <h2 className="text-lg font-bold text-gray-800">Modifier la catégorie</h2>
+            </div>
+            <div className="p-6">
+              {error && (
+                <div className="flex items-center gap-3 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl mb-4 text-sm">
+                  <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                  <span className="font-medium">{error}</span>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Description
-                  </label>
-                  <textarea
-                    required
-                    value={formData.description}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                    rows={3}
-                  />
+              )}
+              <form onSubmit={handleUpdate}>
+                <div className="space-y-4">
+                  <div>
+                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider pl-1 mb-1.5 block">
+                      Nom de la catégorie
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={formData.name}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      className="w-full px-4 py-3 border border-gray-200 rounded-xl bg-gray-50 focus:outline-none focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider pl-1 mb-1.5 block">
+                      Description
+                    </label>
+                    <textarea
+                      required
+                      value={formData.description}
+                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                      className="w-full px-4 py-3 border border-gray-200 rounded-xl bg-gray-50 focus:outline-none focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all resize-none"
+                      rows={3}
+                    />
+                  </div>
                 </div>
-              </div>
-              <div className="flex justify-end space-x-2 mt-6">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowEditModal(false);
-                    setSelectedCategory(null);
-                    setFormData({ name: '', description: '' });
-                    setError(null);
-                  }}
-                  className="px-4 py-2 border rounded-lg hover:bg-gray-50"
-                >
-                  Annuler
-                </button>
-                <button
-                  type="submit"
-                  disabled={submitting}
-                  className="px-4 py-2 bg-[#3A905B] text-white rounded-lg hover:bg-[#327C4E] disabled:opacity-50"
-                >
-                  {submitting ? 'Modification...' : 'Modifier'}
-                </button>
-              </div>
-            </form>
+                <div className="flex justify-end gap-2 mt-6">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowEditModal(false);
+                      setSelectedCategory(null);
+                      setFormData({ name: '', description: '' });
+                      setError(null);
+                    }}
+                    className="px-4 py-2.5 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors font-medium text-sm text-gray-700"
+                  >
+                    Annuler
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={submitting}
+                    className="inline-flex items-center gap-2 px-5 py-2.5 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-all font-medium text-sm shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <Edit3 className="w-4 h-4" />
+                    {submitting ? 'Modification...' : 'Modifier'}
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
         </div>
       )}
 
       {/* Modal de suppression */}
       {showDeleteModal && selectedCategory && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md">
-            <h2 className="text-xl font-bold mb-4">Supprimer la catégorie</h2>
-            {error && (
-              <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-                {error}
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
+            <div className="flex items-center gap-3 px-6 py-4 border-b border-gray-100">
+              <div className="p-2 bg-red-50 rounded-xl">
+                <Trash2 className="w-5 h-5 text-red-600" />
               </div>
-            )}
-            <p className="mb-4">
-              Êtes-vous sûr de vouloir supprimer la catégorie <strong>"{selectedCategory.name}"</strong> ?
-              Cette action est irréversible.
-            </p>
-            <div className="flex justify-end space-x-2">
-              <button
-                type="button"
-                onClick={() => {
-                  setShowDeleteModal(false);
-                  setSelectedCategory(null);
-                  setError(null);
-                }}
-                className="px-4 py-2 border rounded-lg hover:bg-gray-50"
-              >
-                Annuler
-              </button>
-              <button
-                onClick={handleDelete}
-                disabled={submitting}
-                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50"
-              >
-                {submitting ? 'Suppression...' : 'Supprimer'}
-              </button>
+              <h2 className="text-lg font-bold text-gray-800">Supprimer la catégorie</h2>
+            </div>
+            <div className="p-6">
+              {error && (
+                <div className="flex items-center gap-3 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl mb-4 text-sm">
+                  <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                  <span className="font-medium">{error}</span>
+                </div>
+              )}
+              <div className="flex items-start gap-3 bg-red-50/50 border border-red-100 rounded-xl p-4 mb-6">
+                <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+                <p className="text-sm text-gray-700">
+                  Êtes-vous sûr de vouloir supprimer la catégorie <strong className="text-gray-900">"{selectedCategory.name}"</strong> ?
+                  Cette action est irréversible.
+                </p>
+              </div>
+              <div className="flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowDeleteModal(false);
+                    setSelectedCategory(null);
+                    setError(null);
+                  }}
+                  className="px-4 py-2.5 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors font-medium text-sm text-gray-700"
+                >
+                  Annuler
+                </button>
+                <button
+                  onClick={handleDelete}
+                  disabled={submitting}
+                  className="inline-flex items-center gap-2 px-5 py-2.5 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-all font-medium text-sm shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  {submitting ? 'Suppression...' : 'Supprimer'}
+                </button>
+              </div>
             </div>
           </div>
         </div>

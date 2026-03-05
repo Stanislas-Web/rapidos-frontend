@@ -11,6 +11,7 @@ import Vendeurs from './pages/admin/Vendeurs';
 import Produits from './pages/admin/Produits';
 import Commandes from './pages/admin/Commandes';
 import Categories from './pages/admin/Categories';
+import CommandeExpress from './pages/admin/CommandeExpress';
 import Login from './pages/admin/login';
 
 const App = () => {
@@ -32,6 +33,7 @@ const App = () => {
         <Route path="vendeurs" element={<Vendeurs />} />
         <Route path="produits" element={<Produits />} />
         <Route path="commandes" element={<Commandes />} />
+        <Route path="commande-express" element={<CommandeExpress />} />
         <Route path="categories" element={<Categories />} />
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Route>

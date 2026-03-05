@@ -28,3 +28,10 @@
     scrollbar-width: none;  /* Firefox */
   }
 }
+
+/* Smooth hover transitions for dashboard cards */
+@layer utilities {
+  .backdrop-blur-sm {
+    backdrop-filter: blur(4px);
+  }
+}

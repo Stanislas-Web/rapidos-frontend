@@ -1,0 +1,359 @@
+================================================================================
+PROMPT POUR IMPLEMENTER L'ENDPOINT ADMIN COMMANDES E-COMMERCE
+================================================================================
+
+CONTEXTE :
+----------
+J'ai une page admin "Commandes" dans mon frontend React + TypeScript qui affiche 
+toutes les commandes e-commerce avec pagination, filtrage par statut, recherche, 
+et détails de chaque commande.
+
+Le frontend appelle : GET /ecommerce/commandes/admin/all
+Mon backend tourne sur : http://24.144.87.127:3333
+Authentification : Bearer token dans le header Authorization.
+
+
+================================================================================
+ENDPOINT PRINCIPAL
+================================================================================
+
+GET /ecommerce/commandes/admin/all
+-----------------------------------
+
+Paramètres query :
+  - page (number, optionnel, défaut: 1) : numéro de la page
+  - limit (number, optionnel, défaut: 20) : nombre de commandes par page
+  - status (string, optionnel) : filtrer par statut de commande
+
+Exemples d'appels :
+  GET /ecommerce/commandes/admin/all?page=1&limit=20
+  GET /ecommerce/commandes/admin/all?page=2&limit=20&status=pending
+  GET /ecommerce/commandes/admin/all?page=1&limit=20&status=delivered
+
+STATUTS POSSIBLES :
+  - "pending"                          (En attente)
+  - "colis en cours de préparation"    (En préparation)
+  - "prêt à expédier"                 (Prêt à expédier)
+  - "en route pour livraison"          (En route pour livraison)
+  - "delivered"                        (Livrée)
+  - "cancelled"                        (Annulée)
+  - "rejected"                         (Rejetée)
+
+
+RÉPONSE ATTENDUE :
+------------------
+
+{
+  "data": [
+    {
+      "id": 1,                              // ou "idCommande": 1
+      "client": "Jean Dupont",              // ou "clientName"
+      "idClient": "client_001",
+      "phone": "+243812345678",             // ou "telephone"
+      "adresse": "123 Avenue de la Paix",   // ou "address"
+      "avenue": "Avenue de la Paix",
+      "quartier": "Gombe",
+      "commune": "Gombe",
+      "ville": "Kinshasa",                  // ou "city"
+      "pays": "RDC",                        // ou "country"
+      "numero": "123",
+      "latitude": -4.325,
+      "longitude": 15.322,
+      "items": [                            // ou "products"
+        {
+          "id": 1,
+          "name": "Smartphone Samsung",
+          "price": 25000,
+          "quantity": 2,
+          "stock": 10,
+          "category": "Electronique",
+          "idVendeur": "5",
+          "imagePath": "https://example.com/image.jpg"
+        },
+        {
+          "id": 2,
+          "name": "Écouteurs Bluetooth",
+          "price": 5000,
+          "quantity": 1,
+          "stock": 50,
+          "category": "Accessoires",
+          "idVendeur": "3",
+          "imagePath": "https://example.com/ecouteurs.jpg"
+        }
+      ],
+      "total": 55000,
+      "status": "pending",
+      "timestamp": "2026-03-05T10:30:00Z",  // ou "createdAt"
+    }
+  ],
+  "total": 320,                             // nombre total de commandes (pour pagination)
+  "meta": {                                 // optionnel, alternative pour "total"
+    "total": 320,
+    "page": 1,
+    "limit": 20,
+    "totalPages": 16
+  }
+}
+
+IMPORTANT : Le champ "total" au niveau racine de la réponse (ou "meta.total")
+est OBLIGATOIRE pour que la pagination fonctionne côté frontend.
+Le frontend calcule : totalPages = Math.ceil(total / limit)
+
+
+STRUCTURE DES ITEMS (PRODUITS) :
+--------------------------------
+Chaque élément dans le tableau "items" (ou "products") doit contenir :
+
+{
+  "id": number,           // ID du produit
+  "name": string,         // Nom du produit
+  "price": number,        // Prix unitaire (en CDF)
+  "quantity": number,     // Quantité commandée
+  "stock": number,        // Stock disponible (optionnel, peut être 0)
+  "category": string,     // Catégorie du produit
+  "idVendeur": string,    // ID du vendeur
+  "imagePath": string     // URL de l'image du produit
+}
+
+
+LOGIQUE BACKEND (SQL) :
+------------------------
+
+-- Récupérer les commandes avec pagination et filtre statut
+SELECT 
+  c.id,
+  c.client,
+  c.id_client AS "idClient",
+  c.phone,
+  c.adresse,
+  c.avenue,
+  c.quartier,
+  c.commune,
+  c.ville,
+  c.pays,
+  c.numero,
+  c.latitude,
+  c.longitude,
+  c.total,
+  c.status,
+  c.created_at AS "timestamp"
+FROM commandes c
+WHERE 1=1
+  AND (c.status = :status OR :status IS NULL)  -- filtre optionnel
+ORDER BY c.created_at DESC
+LIMIT :limit
+OFFSET (:page - 1) * :limit;
+
+-- Compter le total pour la pagination
+SELECT COUNT(*) AS total
+FROM commandes c
+WHERE 1=1
+  AND (c.status = :status OR :status IS NULL);
+
+-- Récupérer les items de chaque commande
+SELECT 
+  ci.id,
+  ci.name,
+  ci.price,
+  ci.quantity,
+  ci.stock,
+  ci.category,
+  ci.id_vendeur AS "idVendeur",
+  ci.image_path AS "imagePath"
+FROM commande_items ci
+WHERE ci.commande_id = :commandeId;
+
+ALTERNATIVE : Si les items sont stockés en JSON dans la colonne "items" :
+SELECT 
+  c.*,
+  c.items::json AS items   -- PostgreSQL
+FROM commandes c
+ORDER BY c.created_at DESC
+LIMIT :limit OFFSET :offset;
+
+
+TABLES À CRÉER (si pas encore fait) :
+--------------------------------------
+
+CREATE TABLE commandes (
+  id SERIAL PRIMARY KEY,
+  client VARCHAR(255) NOT NULL,
+  id_client VARCHAR(100) NOT NULL,
+  phone VARCHAR(50),
+  adresse TEXT,
+  avenue VARCHAR(255),
+  quartier VARCHAR(255),
+  commune VARCHAR(255),
+  ville VARCHAR(255),
+  pays VARCHAR(100),
+  numero VARCHAR(50),
+  latitude DECIMAL(10, 7),
+  longitude DECIMAL(10, 7),
+  total DECIMAL(12, 2) NOT NULL DEFAULT 0,
+  status VARCHAR(100) NOT NULL DEFAULT 'pending',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE commande_items (
+  id SERIAL PRIMARY KEY,
+  commande_id INTEGER NOT NULL REFERENCES commandes(id) ON DELETE CASCADE,
+  product_id INTEGER,
+  name VARCHAR(255) NOT NULL,
+  price DECIMAL(12, 2) NOT NULL,
+  quantity INTEGER NOT NULL DEFAULT 1,
+  stock INTEGER DEFAULT 0,
+  category VARCHAR(255),
+  id_vendeur VARCHAR(100),
+  image_path TEXT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Index pour les performances
+CREATE INDEX idx_commandes_status ON commandes(status);
+CREATE INDEX idx_commandes_created_at ON commandes(created_at DESC);
+CREATE INDEX idx_commandes_id_client ON commandes(id_client);
+CREATE INDEX idx_commande_items_commande_id ON commande_items(commande_id);
+
+
+EXEMPLE D'IMPLÉMENTATION (Node.js / AdonisJS) :
+-------------------------------------------------
+
+// routes.ts
+Route.get('/ecommerce/commandes/admin/all', 'CommandesController.index')
+  .middleware('auth')
+
+// CommandesController.ts
+import { HttpContextContract } from '@ioc:Adonis/Core/HttpContext'
+import Database from '@ioc:Adonis/Lucid/Database'
+
+export default class CommandesController {
+  public async index({ request, response }: HttpContextContract) {
+    const page = request.input('page', 1)
+    const limit = request.input('limit', 20)
+    const status = request.input('status')
+
+    // Query builder
+    let query = Database.from('commandes').orderBy('created_at', 'desc')
+
+    // Filtre par statut (si fourni et pas "all")
+    if (status && status !== 'all') {
+      query = query.where('status', status)
+    }
+
+    // Pagination
+    const commandes = await query.paginate(page, limit)
+
+    // Pour chaque commande, récupérer les items
+    const data = await Promise.all(
+      commandes.all().map(async (commande) => {
+        const items = await Database.from('commande_items')
+          .where('commande_id', commande.id)
+        
+        return {
+          id: commande.id,
+          client: commande.client,
+          idClient: commande.id_client,
+          phone: commande.phone,
+          adresse: commande.adresse,
+          avenue: commande.avenue,
+          quartier: commande.quartier,
+          commune: commande.commune,
+          ville: commande.ville,
+          pays: commande.pays,
+          numero: commande.numero,
+          latitude: commande.latitude,
+          longitude: commande.longitude,
+          total: commande.total,
+          status: commande.status,
+          timestamp: commande.created_at,
+          items: items.map(item => ({
+            id: item.product_id || item.id,
+            name: item.name,
+            price: item.price,
+            quantity: item.quantity,
+            stock: item.stock || 0,
+            category: item.category || '',
+            idVendeur: item.id_vendeur || '',
+            imagePath: item.image_path || ''
+          }))
+        }
+      })
+    )
+
+    return response.json({
+      data,
+      total: commandes.total,
+      meta: {
+        total: commandes.total,
+        page: commandes.currentPage,
+        limit: commandes.perPage,
+        totalPages: commandes.lastPage
+      }
+    })
+  }
+}
+
+
+ALTERNATIVE AVEC FIREBASE ADMIN SDK :
+---------------------------------------
+
+// Si tu veux continuer à lire depuis Firestore côté serveur
+
+const admin = require('firebase-admin')
+const db = admin.firestore()
+
+async function getCommandes(page, limit, status) {
+  let query = db.collection('carts').orderBy('timestamp', 'desc')
+
+  // Filtre par statut
+  if (status && status !== 'all') {
+    query = query.where('status', '==', status)
+  }
+
+  // Récupérer toutes les commandes (Firestore ne supporte pas OFFSET natif)
+  const snapshot = await query.get()
+  const allDocs = snapshot.docs.map(doc => ({
+    id: doc.id,
+    ...doc.data(),
+    timestamp: doc.data().timestamp?.toDate()?.toISOString()
+  }))
+
+  // Pagination manuelle
+  const total = allDocs.length
+  const offset = (page - 1) * limit
+  const data = allDocs.slice(offset, offset + limit)
+
+  return { data, total }
+}
+
+
+NOTES :
+-------
+1. La réponse doit être triée par date décroissante (commandes récentes en premier)
+2. Le champ "total" (nombre total pour pagination) est CRUCIAL
+3. Le frontend accepte les noms de champs suivants (avec fallback) :
+   - id OU idCommande
+   - client OU clientName
+   - phone OU telephone
+   - adresse OU address
+   - ville OU city
+   - pays OU country
+   - items OU products
+   - timestamp OU createdAt
+4. Les prix sont en CDF (Franc Congolais)
+5. Le frontend affiche 20 commandes par page par défaut
+6. L'endpoint doit être protégé par authentification (Bearer token)
+
+================================================================================
+RÉSUMÉ
+================================================================================
+
+GET /ecommerce/commandes/admin/all?page=1&limit=20&status=pending
+
+-> Retourne la liste paginée des commandes e-commerce
+-> Filtre optionnel par statut
+-> Chaque commande inclut ses items/produits
+-> Total obligatoire pour la pagination
+
+================================================================================
