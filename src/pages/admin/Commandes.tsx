@@ -418,7 +418,7 @@ const Commandes = () => {
             </div>
             <div>
               <p className="text-xs font-medium text-gray-400 uppercase tracking-wider">Chiffre d'affaires</p>
-              <p className="text-xl font-extrabold text-gray-900 mt-0.5">
+              <p className="text-xm font-extrabold text-gray-900 mt-0.5">
                 {formatPrice(filteredCarts.reduce((total, cart) => total + cart.total, 0))}
               </p>
             </div>
