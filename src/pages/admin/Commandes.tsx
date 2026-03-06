@@ -70,6 +70,9 @@ const Commandes = () => {
 
       const response = await api.get(url);
       
+      // DEBUG: Voir la structure exacte de la réponse API
+      console.log('API Response:', JSON.stringify(response.data, null, 2));
+      
       // Adapter la réponse selon la structure de l'API
       const data = response.data?.data || response.data?.commandes || response.data || [];
       const total = response.data?.total || response.data?.meta?.total || data.length;
@@ -90,7 +93,7 @@ const Commandes = () => {
         latitude: item.latitude || 0,
         longitude: item.longitude || 0,
         items: item.items || item.products || [],
-        total: item.total || 0,
+        total: parseFloat(item.total || item.montant || item.amount || item.totalPrice || 0),
         status: item.status || 'pending',
         timestamp: item.timestamp ? new Date(item.timestamp) : (item.createdAt ? new Date(item.createdAt) : new Date())
       })) as CartType[];
