@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../../utils/api';
-import { Store, Package, UserCheck, Clock, Search, X, Mail, Phone, Calendar, AlertCircle, Hash, BoxIcon, ShoppingBag } from 'lucide-react';
+import * as XLSX from 'xlsx';
+import { Store, Package, UserCheck, Clock, Search, X, Mail, Phone, Calendar, AlertCircle, Hash, BoxIcon, ShoppingBag, Download, Eye } from 'lucide-react';
 
 type ProductType = {
   id: number;
@@ -56,6 +57,8 @@ const Vendeurs = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedVendeur, setSelectedVendeur] = useState<VendeurWithProductsType | null>(null);
+  const [showModal, setShowModal] = useState(false);
 
   useEffect(() => {
     const fetchVendeurs = async () => {
@@ -64,7 +67,6 @@ const Vendeurs = () => {
 
       try {
         const response = await api.get('/vendeurs');
-        console.log(JSON.stringify(response.data));
         setVendeurs(response.data.vendeurWITHProduct || []);
         setFilteredVendeurs(response.data.vendeurWITHProduct || []);
       } catch (error) {
@@ -78,39 +80,19 @@ const Vendeurs = () => {
     fetchVendeurs();
   }, []);
 
-  // Filtrer les vendeurs et produits basé sur le terme de recherche
   useEffect(() => {
     if (!searchTerm.trim()) {
       setFilteredVendeurs(vendeurs);
       return;
     }
 
-    const filtered = vendeurs.map(vendeurData => {
-      // Vérifier si le vendeur correspond au terme de recherche
-      const vendeurMatches = 
-        vendeurData.vendeur.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        vendeurData.vendeur.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        vendeurData.vendeur.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        vendeurData.vendeur.phone.includes(searchTerm);
-
-      // Filtrer les produits qui correspondent au terme de recherche
-      const filteredProducts = vendeurData.products.filter(product =>
-        product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        product.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        product.price.toString().includes(searchTerm) ||
-        product.stock.toString().includes(searchTerm)
-      );
-
-      // Retourner le vendeur seulement s'il correspond ou s'il a des produits qui correspondent
-      if (vendeurMatches || filteredProducts.length > 0) {
-        return {
-          ...vendeurData,
-          products: vendeurMatches ? vendeurData.products : filteredProducts
-        };
-      }
-
-      return null;
-    }).filter(Boolean) as VendeurWithProductsType[];
+    const filtered = vendeurs.filter(vendeurData =>
+      vendeurData.vendeur.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      vendeurData.vendeur.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      vendeurData.vendeur.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      vendeurData.vendeur.phone.includes(searchTerm) ||
+      vendeurData.products.some(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()))
+    );
 
     setFilteredVendeurs(filtered);
   }, [searchTerm, vendeurs]);
@@ -123,7 +105,20 @@ const Vendeurs = () => {
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('fr-FR');
+    if (!dateString) return '-';
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return '-';
+    return date.toLocaleDateString('fr-FR');
+  };
+
+  const openModal = (vendeurData: VendeurWithProductsType) => {
+    setSelectedVendeur(vendeurData);
+    setShowModal(true);
+  };
+
+  const closeModal = () => {
+    setShowModal(false);
+    setSelectedVendeur(null);
   };
 
   return (
@@ -139,12 +134,43 @@ const Vendeurs = () => {
           </h1>
           <p className="text-sm text-gray-500 mt-1 ml-14">Gérer les vendeurs et leurs produits</p>
         </div>
-        {!loading && !error && (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 text-emerald-700 text-sm font-medium rounded-full border border-emerald-200">
-            <Store className="w-4 h-4" />
-            {vendeurs.length} vendeur{vendeurs.length > 1 ? 's' : ''}
-          </span>
-        )}
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => {
+              try {
+                const exportData = filteredVendeurs.map(v => ({
+                  'ID': v.vendeur.id,
+                  'Prénom': v.vendeur.firstName,
+                  'Nom': v.vendeur.lastName,
+                  'Email': v.vendeur.email,
+                  'Téléphone': v.vendeur.phone,
+                  'Rôle': v.vendeur.role,
+                  'Statut': v.vendeur.userStatus,
+                  'Nombre de produits': v.products?.length || 0,
+                  'Date de création': v.vendeur.createdAt ? new Date(v.vendeur.createdAt).toLocaleDateString('fr-FR') : '-',
+                }));
+                const ws = XLSX.utils.json_to_sheet(exportData);
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, 'Vendeurs');
+                const date = new Date().toISOString().split('T')[0];
+                XLSX.writeFile(wb, `vendeurs_${date}.xlsx`);
+              } catch (error) {
+                console.error('Erreur lors de l\'export Excel:', error);
+              }
+            }}
+            disabled={filteredVendeurs.length === 0}
+            className="inline-flex items-center gap-1.5 px-4 py-2 bg-white text-gray-600 rounded-xl text-sm font-medium border border-gray-200 hover:bg-gray-50 hover:border-gray-300 transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            <Download className="w-4 h-4" />
+            Export Excel
+          </button>
+          {!loading && !error && (
+            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 text-emerald-700 text-sm font-medium rounded-full border border-emerald-200">
+              <Store className="w-4 h-4" />
+              {vendeurs.length} vendeur{vendeurs.length > 1 ? 's' : ''}
+            </span>
+          )}
+        </div>
       </div>
 
       {loading ? (
@@ -209,10 +235,7 @@ const Vendeurs = () => {
                 </div>
                 <div>
                   <p className="text-xs font-medium text-gray-400 uppercase tracking-wider">En Attente</p>
-                  <p className="text-2xl font-extrabold text-gray-900 mt-0.5">
-                    0
-                    {/* {filteredVendeurs.filter(v => v.vendeur.userStatus === 'pending').length} */}
-                  </p>
+                  <p className="text-2xl font-extrabold text-gray-900 mt-0.5">0</p>
                 </div>
               </div>
             </div>
@@ -226,7 +249,7 @@ const Vendeurs = () => {
               </div>
               <input
                 type="text"
-                placeholder="Rechercher par nom, email, téléphone, produit, prix..."
+                placeholder="Rechercher par nom, email, téléphone..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="block w-full pl-12 pr-10 py-3 border border-gray-200 rounded-xl leading-5 bg-gray-50 placeholder-gray-400 focus:outline-none focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
@@ -248,143 +271,276 @@ const Vendeurs = () => {
             )}
           </div>
 
-          {/* Liste des vendeurs */}
-          <div className="space-y-5">
-            {filteredVendeurs.length > 0 ? (
-              filteredVendeurs.map((vendeurData) => (
-                <div key={vendeurData.vendeur.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-md transition-shadow duration-200">
-                  {/* En-tête du vendeur */}
-                  <div className="bg-gradient-to-r from-gray-50 to-white px-6 py-5 border-b border-gray-100">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-4">
-                        {vendeurData.media && vendeurData.media.mediaUrl ? (
-                          <img 
-                            src={vendeurData.media.mediaUrl} 
-                            alt={`${vendeurData.vendeur.firstName} ${vendeurData.vendeur.lastName}`}
-                            className="w-14 h-14 rounded-2xl object-cover border-2 border-emerald-200 shadow-sm"
-                            onError={(e) => {
-                              e.currentTarget.style.display = 'none';
-                              e.currentTarget.nextElementSibling?.classList.remove('hidden');
-                            }}
-                          />
-                        ) : null}
-                        <div className={`w-14 h-14 bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-2xl flex items-center justify-center shadow-sm ${vendeurData.media && vendeurData.media.mediaUrl ? 'hidden' : ''}`}>
-                          <span className="text-white font-bold text-lg">
-                            {vendeurData.vendeur.firstName.charAt(0)}{vendeurData.vendeur.lastName.charAt(0)}
-                          </span>
-                        </div>
-                        <div>
-                          <h3 className="text-lg font-bold text-gray-800">
-                            {vendeurData.vendeur.firstName} {vendeurData.vendeur.lastName}
-                          </h3>
-                          <div className="flex items-center gap-4 mt-1">
-                            <span className="flex items-center gap-1.5 text-sm text-gray-500">
-                              <Mail className="w-3.5 h-3.5" />
-                              {vendeurData.vendeur.email}
-                            </span>
-                            <span className="flex items-center gap-1.5 text-sm text-gray-500">
-                              <Phone className="w-3.5 h-3.5" />
-                              {vendeurData.vendeur.phone}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="text-right flex flex-col items-end gap-2">
-                        <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold ${
-                          vendeurData.vendeur.userStatus === 'active' || vendeurData.vendeur.userStatus === 'pending'
-                            ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' 
-                            : 'bg-amber-50 text-amber-700 border border-amber-200'
-                        }`}>
-                          <span className={`w-1.5 h-1.5 rounded-full ${
-                            vendeurData.vendeur.userStatus === 'active' || vendeurData.vendeur.userStatus === 'pending'
-                              ? 'bg-emerald-500' : 'bg-amber-500'
-                          }`}></span>
-                          {vendeurData.vendeur.userStatus === 'active' || vendeurData.vendeur.userStatus === 'pending' ? 'Actif' : 'Inactif'}
-                        </span>
-                        <span className="flex items-center gap-1.5 text-xs text-gray-400">
-                          <Calendar className="w-3 h-3" />
-                          Inscrit le {formatDate(vendeurData.vendeur.createdAt)}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Produits du vendeur */}
-                  <div className="p-6">
-                    <div className="flex items-center gap-2 mb-4">
-                      <div className="p-1.5 bg-blue-50 rounded-lg">
-                        <Package className="w-4 h-4 text-blue-600" />
-                      </div>
-                      <h4 className="font-semibold text-gray-700">
-                        Produits
-                      </h4>
-                      <span className="ml-1 px-2 py-0.5 bg-blue-50 text-blue-600 text-xs font-bold rounded-full">
-                        {vendeurData.products.length}
-                      </span>
-                    </div>
-                    
-                    {vendeurData.products.length > 0 ? (
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {vendeurData.products.map((product) => (
-                          <div key={product.id} className="group border border-gray-100 rounded-xl p-4 hover:shadow-md hover:border-emerald-200 transition-all duration-200 bg-gray-50/50">
-                            {product.media && (
-                              <div className="mb-3 -mx-1 -mt-1">
-                                <img 
-                                  src={product.media.mediaUrl} 
-                                  alt={product.name}
-                                  className="w-full h-32 object-cover rounded-lg"
-                                  onError={(e) => {
-                                    e.currentTarget.parentElement!.style.display = 'none';
-                                  }}
-                                />
-                              </div>
-                            )}
-                            <div className="flex items-start justify-between mb-2">
-                              <h5 className="font-semibold text-gray-800 group-hover:text-emerald-700 transition-colors">{product.name}</h5>
-                              <span className="text-xs text-gray-400 font-mono flex items-center gap-0.5">
-                                <Hash className="w-3 h-3" />
-                                {product.id}
+          {/* Tableau des vendeurs */}
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="min-w-full">
+                <thead>
+                  <tr className="bg-gray-50/80 border-b border-gray-100">
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Vendeur</th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Email</th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Téléphone</th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Produits</th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Statut</th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Date</th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Détails</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                  {filteredVendeurs.length > 0 ? (
+                    filteredVendeurs.map((vendeurData) => (
+                      <tr key={vendeurData.vendeur.id} className="hover:bg-gray-50/50 transition-colors duration-150">
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-3">
+                            {vendeurData.media && vendeurData.media.mediaUrl ? (
+                              <img 
+                                src={vendeurData.media.mediaUrl} 
+                                alt={`${vendeurData.vendeur.firstName} ${vendeurData.vendeur.lastName}`}
+                                className="w-10 h-10 rounded-xl object-cover border border-gray-100 flex-shrink-0"
+                                onError={(e) => {
+                                  e.currentTarget.style.display = 'none';
+                                  e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                                }}
+                              />
+                            ) : null}
+                            <div className={`w-10 h-10 bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-xl flex items-center justify-center flex-shrink-0 ${vendeurData.media && vendeurData.media.mediaUrl ? 'hidden' : ''}`}>
+                              <span className="text-white font-bold text-sm">
+                                {vendeurData.vendeur.firstName.charAt(0)}{vendeurData.vendeur.lastName.charAt(0)}
                               </span>
                             </div>
-                            <p className="text-sm text-gray-500 mb-3 line-clamp-2">{product.description}</p>
-                            <div className="flex justify-between items-center pt-2 border-t border-gray-100">
-                              <span className="text-base font-bold text-emerald-600">
-                                {formatPrice(product.price)}
-                              </span>
+                            <div className="min-w-0">
+                              <div className="text-sm font-semibold text-gray-800">{vendeurData.vendeur.firstName} {vendeurData.vendeur.lastName}</div>
+                              <div className="text-xs text-gray-400 font-mono">#{vendeurData.vendeur.id}</div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className="text-sm text-gray-600 flex items-center gap-1.5">
+                            <Mail className="w-3.5 h-3.5 text-gray-400" />
+                            {vendeurData.vendeur.email}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className="text-sm text-gray-600 flex items-center gap-1.5">
+                            <Phone className="w-3.5 h-3.5 text-gray-400" />
+                            {vendeurData.vendeur.phone}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200">
+                            <Package className="w-3 h-3" />
+                            {vendeurData.products.length}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${
+                            vendeurData.vendeur.userStatus === 'active' || vendeurData.vendeur.userStatus === 'pending'
+                              ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' 
+                              : 'bg-amber-50 text-amber-700 border border-amber-200'
+                          }`}>
+                            <span className={`w-1.5 h-1.5 rounded-full ${
+                              vendeurData.vendeur.userStatus === 'active' || vendeurData.vendeur.userStatus === 'pending'
+                                ? 'bg-emerald-500' : 'bg-amber-500'
+                            }`}></span>
+                            {vendeurData.vendeur.userStatus === 'active' || vendeurData.vendeur.userStatus === 'pending' ? 'Actif' : 'Inactif'}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className="text-sm text-gray-400 flex items-center gap-1.5">
+                            <Calendar className="w-3.5 h-3.5" />
+                            {formatDate(vendeurData.vendeur.createdAt)}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4">
+                          <button
+                            className="p-2 rounded-xl text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 transition-all duration-200"
+                            onClick={() => openModal(vendeurData)}
+                            title="Voir les détails"
+                          >
+                            <Eye className="w-5 h-5" />
+                          </button>
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan={7} className="px-6 py-12 text-center">
+                        <div className="w-14 h-14 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                          <Search className="w-6 h-6 text-gray-400" />
+                        </div>
+                        <p className="text-sm font-medium text-gray-500">
+                          {searchTerm ? `Aucun vendeur ne correspond à "${searchTerm}"` : 'Aucun vendeur disponible'}
+                        </p>
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de détails */}
+      {showModal && selectedVendeur && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm overflow-y-auto h-full w-full z-50 flex items-start justify-center pt-10 pb-10">
+          <div className="relative w-11/12 md:w-3/4 lg:w-2/3 bg-white rounded-2xl shadow-2xl max-h-[90vh] flex flex-col">
+            {/* En-tête du modal */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 flex-shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-emerald-50 rounded-xl">
+                  <Store className="w-5 h-5 text-emerald-600" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-gray-800">
+                    {selectedVendeur.vendeur.firstName} {selectedVendeur.vendeur.lastName}
+                  </h3>
+                  <p className="text-xs text-gray-400 font-mono">#{selectedVendeur.vendeur.id}</p>
+                </div>
+              </div>
+              <button
+                onClick={closeModal}
+                className="p-2 rounded-xl hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-all"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Contenu scrollable */}
+            <div className="overflow-y-auto p-6 space-y-6 flex-1">
+              {/* Infos vendeur */}
+              <div>
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="p-1.5 bg-emerald-50 rounded-lg">
+                    <Store className="w-4 h-4 text-emerald-600" />
+                  </div>
+                  <h4 className="font-semibold text-gray-700 text-sm">Informations du vendeur</h4>
+                </div>
+                <div className="bg-gray-50/80 p-4 rounded-xl border border-gray-100">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-xs text-gray-400 mb-0.5">Nom complet</p>
+                      <p className="text-sm font-medium text-gray-700">{selectedVendeur.vendeur.firstName} {selectedVendeur.vendeur.lastName}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-400 mb-0.5">Email</p>
+                      <p className="text-sm font-medium text-gray-700">{selectedVendeur.vendeur.email}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-400 mb-0.5">Téléphone</p>
+                      <p className="text-sm font-medium text-gray-700">{selectedVendeur.vendeur.phone}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-400 mb-0.5">Statut</p>
+                      <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${
+                        selectedVendeur.vendeur.userStatus === 'active' || selectedVendeur.vendeur.userStatus === 'pending'
+                          ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' 
+                          : 'bg-amber-50 text-amber-700 border border-amber-200'
+                      }`}>
+                        {selectedVendeur.vendeur.userStatus === 'active' || selectedVendeur.vendeur.userStatus === 'pending' ? 'Actif' : 'Inactif'}
+                      </span>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-400 mb-0.5">Rôle</p>
+                      <p className="text-sm font-medium text-gray-700">{selectedVendeur.vendeur.role}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-400 mb-0.5">Date d'inscription</p>
+                      <p className="text-sm font-medium text-gray-700">{formatDate(selectedVendeur.vendeur.createdAt)}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Produits du vendeur */}
+              <div>
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="p-1.5 bg-blue-50 rounded-lg">
+                    <Package className="w-4 h-4 text-blue-600" />
+                  </div>
+                  <h4 className="font-semibold text-gray-700 text-sm">Produits</h4>
+                  <span className="ml-1 px-2 py-0.5 bg-blue-50 text-blue-600 text-xs font-bold rounded-full">
+                    {selectedVendeur.products.length}
+                  </span>
+                </div>
+
+                {selectedVendeur.products.length > 0 ? (
+                  <div className="overflow-x-auto rounded-xl border border-gray-100">
+                    <table className="min-w-full">
+                      <thead>
+                        <tr className="bg-gray-50/80 border-b border-gray-100">
+                          <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Produit</th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Description</th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Prix</th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Stock</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-50">
+                        {selectedVendeur.products.map((product) => (
+                          <tr key={product.id} className="hover:bg-gray-50/50 transition-colors duration-150">
+                            <td className="px-4 py-3">
+                              <div className="flex items-center gap-3">
+                                {product.media ? (
+                                  <img 
+                                    src={product.media.mediaUrl} 
+                                    alt={product.name}
+                                    className="w-10 h-10 rounded-lg object-cover border border-gray-100 flex-shrink-0"
+                                    onError={(e) => {
+                                      e.currentTarget.style.display = 'none';
+                                      e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                                    }}
+                                  />
+                                ) : null}
+                                <div className={`w-10 h-10 bg-emerald-50 rounded-lg flex items-center justify-center flex-shrink-0 ${product.media ? 'hidden' : ''}`}>
+                                  <Package className="w-4 h-4 text-emerald-500" />
+                                </div>
+                                <div className="min-w-0">
+                                  <div className="text-sm font-semibold text-gray-800 truncate">{product.name}</div>
+                                  <div className="text-xs text-gray-400 font-mono">#{product.id}</div>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="px-4 py-3">
+                              <p className="text-sm text-gray-500 truncate max-w-[200px]">{product.description}</p>
+                            </td>
+                            <td className="px-4 py-3">
+                              <span className="text-sm font-bold text-emerald-600">{formatPrice(product.price)}</span>
+                            </td>
+                            <td className="px-4 py-3">
                               <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold ${
-                                product.stock > 0 
-                                  ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' 
-                                  : 'bg-red-50 text-red-700 border border-red-200'
+                                product.stock > 10
+                                  ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                                  : product.stock > 0
+                                    ? 'bg-amber-50 text-amber-700 border border-amber-200'
+                                    : 'bg-red-50 text-red-700 border border-red-200'
                               }`}>
                                 <BoxIcon className="w-3 h-3" />
                                 {product.stock}
                               </span>
-                            </div>
-                          </div>
+                            </td>
+                          </tr>
                         ))}
-                      </div>
-                    ) : (
-                      <div className="text-center py-8 bg-gray-50 rounded-xl border border-dashed border-gray-200">
-                        <ShoppingBag className="w-8 h-8 text-gray-300 mx-auto mb-2" />
-                        <p className="text-gray-400 text-sm font-medium">
-                          Aucun produit pour ce vendeur
-                        </p>
-                      </div>
-                    )}
+                      </tbody>
+                    </table>
                   </div>
-                </div>
-              ))
-            ) : (
-              <div className="bg-white p-12 rounded-2xl border border-gray-100 shadow-sm text-center">
-                <div className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                  <Search className="w-7 h-7 text-gray-400" />
-                </div>
-                <h3 className="text-base font-semibold text-gray-700">Aucun résultat trouvé</h3>
-                <p className="mt-1 text-sm text-gray-400 max-w-sm mx-auto">
-                  {searchTerm ? `Aucun vendeur ou produit ne correspond à "${searchTerm}"` : 'Aucun vendeur disponible'}
-                </p>
+                ) : (
+                  <div className="text-center py-8 bg-gray-50 rounded-xl border border-dashed border-gray-200">
+                    <ShoppingBag className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+                    <p className="text-gray-400 text-sm font-medium">Aucun produit pour ce vendeur</p>
+                  </div>
+                )}
               </div>
-            )}
+            </div>
+
+            {/* Footer */}
+            <div className="flex items-center justify-end px-6 py-4 border-t border-gray-100 flex-shrink-0 bg-gray-50/50">
+              <button 
+                onClick={closeModal}
+                className="px-4 py-2.5 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-colors font-medium text-sm"
+              >
+                Fermer
+              </button>
+            </div>
           </div>
         </div>
       )}

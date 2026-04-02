@@ -11,6 +11,8 @@ import Vendeurs from '../pages/admin/Vendeurs';
 import Commandes from '../pages/admin/Commandes'; 
 import Categories from '../pages/admin/Categories'; // ✅
 import CommandeExpress from '../pages/admin/CommandeExpress';
+import Utilisateurs from '../pages/admin/Utilisateurs';
+import FraisLivraison from '../pages/admin/FraisLivraison';
 
 
 const AdminRoutes = () => {
@@ -26,7 +28,8 @@ const AdminRoutes = () => {
         <Route path="commandes" element={<Commandes />} /> {/* ✅ Ajouté */}
         <Route path="commande-express" element={<CommandeExpress />} />
         <Route path="categories" element={<Categories />} />
- ✅
+        <Route path="utilisateurs" element={<Utilisateurs />} />
+        <Route path="frais-livraison" element={<FraisLivraison />} />
 
       </Route>
     </Routes>

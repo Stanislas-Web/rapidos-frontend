@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, onSnapshot } from 'firebase/firestore';
 import { db } from '../../firebase/config';
+import * as XLSX from 'xlsx';
 import {
   Truck, Users, UserCheck, UserX, Search, X,
   Clock, Calendar, Shield, Edit3, Trash2, Power,
-  AlertCircle, ToggleLeft, ToggleRight
+  AlertCircle, ToggleLeft, ToggleRight, Download
 } from 'lucide-react';
 
 type StatusType = {
@@ -141,9 +142,37 @@ const Livreurs = () => {
           <h1 className="text-2xl font-extrabold text-gray-900 tracking-tight">Livreurs</h1>
           <p className="text-sm text-gray-400 mt-0.5">Gérez les statuts et les rôles en temps réel</p>
         </div>
-        <div className="flex items-center gap-2 bg-emerald-50 text-emerald-700 px-4 py-2 rounded-xl text-sm font-semibold">
-          <Users className="w-4 h-4" />
-          {filteredData.length} utilisateur{filteredData.length > 1 ? 's' : ''}
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => {
+              try {
+                const exportData = filteredData.map(item => ({
+                  'User ID': item.userId,
+                  'Nom': item.userName,
+                  'Rôle': item.role,
+                  'Statut': item.status ? 'Actif' : 'Inactif',
+                  'Date de création': item.createdAt ? formatDate(item.createdAt) : '-',
+                  'Dernière mise à jour': item.lastUpdated ? formatDate(item.lastUpdated) : '-',
+                }));
+                const ws = XLSX.utils.json_to_sheet(exportData);
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, 'Livreurs');
+                const date = new Date().toISOString().split('T')[0];
+                XLSX.writeFile(wb, `livreurs_${date}.xlsx`);
+              } catch (error) {
+                console.error('Erreur lors de l\'export Excel:', error);
+              }
+            }}
+            disabled={filteredData.length === 0}
+            className="inline-flex items-center gap-1.5 px-4 py-2 bg-white text-gray-600 rounded-xl text-sm font-medium border border-gray-200 hover:bg-gray-50 hover:border-gray-300 transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            <Download className="w-4 h-4" />
+            Export Excel
+          </button>
+          <div className="flex items-center gap-2 bg-emerald-50 text-emerald-700 px-4 py-2 rounded-xl text-sm font-semibold">
+            <Users className="w-4 h-4" />
+            {filteredData.length} utilisateur{filteredData.length > 1 ? 's' : ''}
+          </div>
         </div>
       </div>
 

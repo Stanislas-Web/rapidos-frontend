@@ -12,6 +12,8 @@ import Produits from './pages/admin/Produits';
 import Commandes from './pages/admin/Commandes';
 import Categories from './pages/admin/Categories';
 import CommandeExpress from './pages/admin/CommandeExpress';
+import Utilisateurs from './pages/admin/Utilisateurs';
+import FraisLivraison from './pages/admin/FraisLivraison';
 import Login from './pages/admin/login';
 
 const App = () => {
@@ -35,6 +37,8 @@ const App = () => {
         <Route path="commandes" element={<Commandes />} />
         <Route path="commande-express" element={<CommandeExpress />} />
         <Route path="categories" element={<Categories />} />
+        <Route path="utilisateurs" element={<Utilisateurs />} />
+        <Route path="frais-livraison" element={<FraisLivraison />} />
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Route>
     </Routes>

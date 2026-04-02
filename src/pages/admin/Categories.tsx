@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import api from '../../utils/api';
-import { Tags, FolderOpen, CheckCircle, Clock, Search, X, Plus, Edit3, Trash2, AlertCircle, Hash, Calendar, FileText } from 'lucide-react';
+import * as XLSX from 'xlsx';
+import { Tags, FolderOpen, CheckCircle, Clock, Search, X, Plus, Edit3, Trash2, AlertCircle, Hash, Calendar, FileText, Download } from 'lucide-react';
 
 type CategoryType = {
   id: number;
@@ -184,6 +185,25 @@ const Categories = () => {
     return '📂';
   };
 
+  const exportToExcel = () => {
+    try {
+      const exportData = filteredCategories.map(cat => ({
+        'ID': cat.id,
+        'Nom': cat.name,
+        'Description': cat.description,
+        'Date de création': cat.createdAt ? new Date(cat.createdAt).toLocaleDateString('fr-FR') : '-',
+        'Dernière modification': cat.updatedAt ? new Date(cat.updatedAt).toLocaleDateString('fr-FR') : '-',
+      }));
+      const ws = XLSX.utils.json_to_sheet(exportData);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Catégories');
+      const date = new Date().toISOString().split('T')[0];
+      XLSX.writeFile(wb, `categories_${date}.xlsx`);
+    } catch (error) {
+      console.error('Erreur lors de l\'export Excel:', error);
+    }
+  };
+
   return (
     <div className="space-y-6 p-4 md:p-6">
       {/* Header */}
@@ -197,16 +217,26 @@ const Categories = () => {
           </h1>
           <p className="text-sm text-gray-500 mt-1 ml-14">Organiser et gérer les catégories de produits</p>
         </div>
-        <button
-          onClick={() => {
-            setFormData({ name: '', description: '' });
-            setShowCreateModal(true);
-          }}
-          className="inline-flex items-center gap-2 bg-emerald-600 text-white px-5 py-2.5 rounded-xl hover:bg-emerald-700 transition-all duration-200 font-medium text-sm shadow-sm shadow-emerald-600/20 hover:shadow-md"
-        >
-          <Plus className="w-4 h-4" />
-          Nouvelle catégorie
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={exportToExcel}
+            disabled={filteredCategories.length === 0}
+            className="inline-flex items-center gap-1.5 px-4 py-2.5 bg-white text-gray-600 rounded-xl text-sm font-medium border border-gray-200 hover:bg-gray-50 hover:border-gray-300 transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            <Download className="w-4 h-4" />
+            Export Excel
+          </button>
+          <button
+            onClick={() => {
+              setFormData({ name: '', description: '' });
+              setShowCreateModal(true);
+            }}
+            className="inline-flex items-center gap-2 bg-emerald-600 text-white px-5 py-2.5 rounded-xl hover:bg-emerald-700 transition-all duration-200 font-medium text-sm shadow-sm shadow-emerald-600/20 hover:shadow-md"
+          >
+            <Plus className="w-4 h-4" />
+            Nouvelle catégorie
+          </button>
+        </div>
       </div>
 
       {error && !showCreateModal && !showEditModal && !showDeleteModal && (

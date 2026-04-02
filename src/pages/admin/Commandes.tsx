@@ -35,6 +35,9 @@ type CartType = {
   longitude: number;
   items: CartItemType[];
   total: number;
+  prixColis: number;
+  fraisLivraison: number;
+  totalAvecLivraison: number;
   status: string;
   timestamp: Date;
 };
@@ -78,25 +81,37 @@ const Commandes = () => {
       const total = response.data?.total || response.data?.meta?.total || data.length;
       
       // Convertir les données pour correspondre au type CartType
-      const formattedData = data.map((item: any) => ({
-        id: item.id?.toString() || item.idCommande?.toString(),
-        client: item.client || item.clientName || '',
-        idClient: item.idClient?.toString() || '',
-        phone: item.phone || item.telephone || '',
-        adresse: item.adresse || item.address || '',
-        avenue: item.avenue || '',
-        quartier: item.quartier || '',
-        commune: item.commune || '',
-        ville: item.ville || item.city || '',
-        pays: item.pays || item.country || '',
-        numero: item.numero || '',
-        latitude: item.latitude || 0,
-        longitude: item.longitude || 0,
-        items: item.items || item.products || [],
-        total: parseFloat(item.total || item.montant || item.amount || item.totalPrice || 0),
-        status: item.status || 'pending',
-        timestamp: item.timestamp ? new Date(item.timestamp) : (item.createdAt ? new Date(item.createdAt) : new Date())
-      })) as CartType[];
+      const formattedData = data.map((item: any) => {
+        // Gérer le cas où adresse est un objet
+        const addr = item.adresse || item.address || '';
+        const isAddrObj = typeof addr === 'object' && addr !== null;
+        const adresseStr = isAddrObj
+          ? [addr.numero, addr.avenue, addr.quartier, addr.commune, addr.ville, addr.pays].filter(Boolean).join(', ')
+          : (addr || '');
+
+        return {
+          id: item.id?.toString() || item.idCommande?.toString(),
+          client: item.client || item.clientName || '',
+          idClient: item.idClient?.toString() || '',
+          phone: item.phone || item.telephone || '',
+          adresse: adresseStr,
+          avenue: item.avenue || (isAddrObj ? addr.avenue : '') || '',
+          quartier: item.quartier || (isAddrObj ? addr.quartier : '') || '',
+          commune: item.commune || (isAddrObj ? addr.commune : '') || '',
+          ville: item.ville || item.city || (isAddrObj ? addr.ville : '') || '',
+          pays: item.pays || item.country || (isAddrObj ? addr.pays : '') || '',
+          numero: item.numero || (isAddrObj ? addr.numero : '') || '',
+          latitude: item.latitude || 0,
+          longitude: item.longitude || 0,
+          items: item.items || item.products || [],
+          total: parseFloat(item.total || item.montant || item.amount || item.totalPrice || 0),
+          prixColis: parseFloat(item.prixColis || 0),
+          fraisLivraison: parseFloat(item.fraisLivraison || 0),
+          totalAvecLivraison: parseFloat(item.totalAvecLivraison || 0),
+          status: item.status || 'pending',
+          timestamp: item.timestamp ? new Date(item.timestamp) : (item.createdAt ? new Date(item.createdAt) : new Date())
+        };
+      }) as CartType[];
 
       setCarts(formattedData);
       setFilteredCarts(formattedData);
@@ -368,62 +383,59 @@ const Commandes = () => {
         )}
       </div>
 
-      {/* Statistiques */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="relative overflow-hidden bg-white p-5 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow duration-300">
-          <div className="absolute -top-3 -right-3 w-16 h-16 bg-emerald-50 rounded-full" />
-          <div className="relative flex items-center gap-4">
-            <div className="w-11 h-11 bg-emerald-50 rounded-xl flex items-center justify-center flex-shrink-0">
-              <ShoppingCart className="w-5 h-5 text-emerald-600" />
-            </div>
-            <div>
-              <p className="text-xs font-medium text-gray-400 uppercase tracking-wider">Total Commandes</p>
-              <p className="text-2xl font-extrabold text-gray-900 mt-0.5">{filteredCarts.length}</p>
-            </div>
-          </div>
-        </div>
-        <div className="relative overflow-hidden bg-white p-5 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow duration-300">
+      {/* Statistiques cliquables */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <button
+          onClick={() => { setStatusFilter(statusFilter === 'pending' ? 'all' : 'pending'); setCurrentPage(1); }}
+          className={`relative overflow-hidden p-5 rounded-2xl border shadow-sm hover:shadow-md transition-all duration-300 text-left ${statusFilter === 'pending' ? 'bg-amber-50 border-amber-300 ring-2 ring-amber-400/30' : 'bg-white border-gray-100'}`}
+        >
           <div className="absolute -top-3 -right-3 w-16 h-16 bg-amber-50 rounded-full" />
           <div className="relative flex items-center gap-4">
             <div className="w-11 h-11 bg-amber-50 rounded-xl flex items-center justify-center flex-shrink-0">
               <Clock className="w-5 h-5 text-amber-600" />
             </div>
             <div>
-              <p className="text-xs font-medium text-gray-400 uppercase tracking-wider">En Attente</p>
+              <p className="text-xs font-medium text-gray-400 uppercase tracking-wider">En attente</p>
               <p className="text-2xl font-extrabold text-gray-900 mt-0.5">
-                {filteredCarts.filter(cart => cart.status === 'pending').length}
+                {carts.filter(cart => cart.status === 'pending').length}
               </p>
             </div>
           </div>
-        </div>
-        <div className="relative overflow-hidden bg-white p-5 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow duration-300">
-          <div className="absolute -top-3 -right-3 w-16 h-16 bg-green-50 rounded-full" />
-          <div className="relative flex items-center gap-4">
-            <div className="w-11 h-11 bg-green-50 rounded-xl flex items-center justify-center flex-shrink-0">
-              <CheckCircle className="w-5 h-5 text-green-600" />
-            </div>
-            <div>
-              <p className="text-xs font-medium text-gray-400 uppercase tracking-wider">Livrées</p>
-              <p className="text-2xl font-extrabold text-gray-900 mt-0.5">
-                {filteredCarts.filter(cart => cart.status === 'delivered').length}
-              </p>
-            </div>
-          </div>
-        </div>
-        <div className="relative overflow-hidden bg-white p-5 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow duration-300">
+        </button>
+        <button
+          onClick={() => { setStatusFilter(statusFilter === 'prêt à expédier' ? 'all' : 'prêt à expédier'); setCurrentPage(1); }}
+          className={`relative overflow-hidden p-5 rounded-2xl border shadow-sm hover:shadow-md transition-all duration-300 text-left ${statusFilter === 'prêt à expédier' ? 'bg-blue-50 border-blue-300 ring-2 ring-blue-400/30' : 'bg-white border-gray-100'}`}
+        >
           <div className="absolute -top-3 -right-3 w-16 h-16 bg-blue-50 rounded-full" />
           <div className="relative flex items-center gap-4">
             <div className="w-11 h-11 bg-blue-50 rounded-xl flex items-center justify-center flex-shrink-0">
-              <DollarSign className="w-5 h-5 text-blue-600" />
+              <Package className="w-5 h-5 text-blue-600" />
             </div>
             <div>
-              <p className="text-xs font-medium text-gray-400 uppercase tracking-wider">Chiffre d'affaires</p>
-              <p className="text-xm font-extrabold text-gray-900 mt-0.5">
-                {formatPrice(filteredCarts.reduce((total, cart) => total + cart.total, 0))}
+              <p className="text-xs font-medium text-gray-400 uppercase tracking-wider">Prêt à expédier</p>
+              <p className="text-2xl font-extrabold text-gray-900 mt-0.5">
+                {carts.filter(cart => cart.status === 'prêt à expédier').length}
               </p>
             </div>
           </div>
-        </div>
+        </button>
+        <button
+          onClick={() => { setStatusFilter(statusFilter === 'en route pour livraison' ? 'all' : 'en route pour livraison'); setCurrentPage(1); }}
+          className={`relative overflow-hidden p-5 rounded-2xl border shadow-sm hover:shadow-md transition-all duration-300 text-left ${statusFilter === 'en route pour livraison' ? 'bg-green-50 border-green-300 ring-2 ring-green-400/30' : 'bg-white border-gray-100'}`}
+        >
+          <div className="absolute -top-3 -right-3 w-16 h-16 bg-green-50 rounded-full" />
+          <div className="relative flex items-center gap-4">
+            <div className="w-11 h-11 bg-green-50 rounded-xl flex items-center justify-center flex-shrink-0">
+              <Truck className="w-5 h-5 text-green-600" />
+            </div>
+            <div>
+              <p className="text-xs font-medium text-gray-400 uppercase tracking-wider">En cours de livraison</p>
+              <p className="text-2xl font-extrabold text-gray-900 mt-0.5">
+                {carts.filter(cart => cart.status === 'en route pour livraison').length}
+              </p>
+            </div>
+          </div>
+        </button>
       </div>
 
       {/* Filtres et recherche */}
@@ -592,7 +604,13 @@ const Commandes = () => {
                   Produits
                 </th>
                 <th className="px-4 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                  Total
+                  Prix colis
+                </th>
+                <th className="px-4 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                  Frais livr.
+                </th>
+                <th className="px-4 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                  Total TTC
                 </th>
                 <th className="px-4 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
                   Statut
@@ -635,8 +653,18 @@ const Commandes = () => {
                       </div>
                     </td>
                     <td className="px-4 py-4 whitespace-nowrap">
+                      <span className="text-sm font-medium text-gray-700">
+                        {formatPrice(cart.prixColis)}
+                      </span>
+                    </td>
+                    <td className="px-4 py-4 whitespace-nowrap">
+                      <span className="text-sm font-medium text-gray-700">
+                        {formatPrice(cart.fraisLivraison)}
+                      </span>
+                    </td>
+                    <td className="px-4 py-4 whitespace-nowrap">
                       <span className="text-sm font-bold text-emerald-600">
-                        {formatPrice(cart.total)}
+                        {formatPrice(cart.totalAvecLivraison || cart.total)}
                       </span>
                     </td>
                     <td className="px-4 py-4 whitespace-nowrap">
@@ -660,7 +688,7 @@ const Commandes = () => {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={7} className="px-6 py-12 text-center">
+                  <td colSpan={9} className="px-6 py-12 text-center">
                     <div className="flex flex-col items-center gap-2">
                       <ShoppingCart className="w-8 h-8 text-gray-300" />
                       <p className="text-sm text-gray-400 font-medium">
@@ -847,21 +875,19 @@ const Commandes = () => {
                 </div>
               </div>
 
-              {/* Total et actions */}
-              <div className="flex items-center justify-between pt-4 border-t border-gray-100">
-                <div>
-                  <p className="text-xs text-gray-400">Total de la commande</p>
-                  <p className="text-xl font-extrabold text-emerald-600">
-                    {formatPrice(selectedCart.total)}
-                  </p>
+              {/* Total */}
+              <div className="pt-4 border-t border-gray-100 space-y-3">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs text-gray-400">Prix colis</p>
+                  <p className="text-sm font-semibold text-gray-700">{formatPrice(selectedCart.prixColis)}</p>
                 </div>
-                <div className="flex gap-2">
-                  <button className="px-4 py-2.5 text-sm font-medium bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-colors">
-                    Confirmer
-                  </button>
-                  <button className="px-4 py-2.5 text-sm font-medium bg-red-50 text-red-600 border border-red-200 rounded-xl hover:bg-red-100 transition-colors">
-                    Annuler
-                  </button>
+                <div className="flex items-center justify-between">
+                  <p className="text-xs text-gray-400">Frais de livraison</p>
+                  <p className="text-sm font-semibold text-gray-700">{formatPrice(selectedCart.fraisLivraison)}</p>
+                </div>
+                <div className="flex items-center justify-between pt-3 border-t border-gray-100">
+                  <p className="text-xs text-gray-400">Total avec livraison</p>
+                  <p className="text-xl font-extrabold text-emerald-600">{formatPrice(selectedCart.totalAvecLivraison || selectedCart.total)}</p>
                 </div>
               </div>
             </div>

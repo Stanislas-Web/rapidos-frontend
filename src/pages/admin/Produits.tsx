@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../../utils/api';
-import { Package, BoxIcon, AlertTriangle, XCircle, Search, X, Eye, Store, Calendar, Hash, DollarSign, AlertCircle, Image, Settings, User, Mail, Phone, Edit3, Trash2 } from 'lucide-react';
+import * as XLSX from 'xlsx';
+import { Package, BoxIcon, AlertTriangle, XCircle, Search, X, Eye, Store, Calendar, Hash, DollarSign, AlertCircle, Image, Settings, User, Mail, Phone, Edit3, Trash2, Download } from 'lucide-react';
 
 type ProductType = {
   id: number;
@@ -124,7 +125,10 @@ const Produits = () => {
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('fr-FR');
+    if (!dateString) return '-';
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return '-';
+    return date.toLocaleDateString('fr-FR');
   };
 
   const getStockStatus = (stock: number) => {
@@ -156,12 +160,44 @@ const Produits = () => {
           </h1>
           <p className="text-sm text-gray-500 mt-1 ml-14">Catalogue complet des produits</p>
         </div>
-        {!loading && !error && (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 text-emerald-700 text-sm font-medium rounded-full border border-emerald-200">
-            <Package className="w-4 h-4" />
-            {allProducts.length} produit{allProducts.length > 1 ? 's' : ''}
-          </span>
-        )}
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => {
+              try {
+                const exportData = filteredProducts.map(p => ({
+                  'ID': p.id,
+                  'Nom': p.name,
+                  'Description': p.description,
+                  'Prix': p.price,
+                  'Stock': p.stock,
+                  'Catégorie ID': p.categorieId,
+                  'Vendeur': p.vendeurName || '-',
+                  'Email vendeur': p.vendeurEmail || '-',
+                  'Téléphone vendeur': p.vendeurPhone || '-',
+                  'Date de création': p.createdAt ? new Date(p.createdAt).toLocaleDateString('fr-FR') : '-',
+                }));
+                const ws = XLSX.utils.json_to_sheet(exportData);
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, 'Produits');
+                const date = new Date().toISOString().split('T')[0];
+                XLSX.writeFile(wb, `produits_${date}.xlsx`);
+              } catch (error) {
+                console.error('Erreur lors de l\'export Excel:', error);
+              }
+            }}
+            disabled={filteredProducts.length === 0}
+            className="inline-flex items-center gap-1.5 px-4 py-2 bg-white text-gray-600 rounded-xl text-sm font-medium border border-gray-200 hover:bg-gray-50 hover:border-gray-300 transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            <Download className="w-4 h-4" />
+            Export Excel
+          </button>
+          {!loading && !error && (
+            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 text-emerald-700 text-sm font-medium rounded-full border border-emerald-200">
+              <Package className="w-4 h-4" />
+              {allProducts.length} produit{allProducts.length > 1 ? 's' : ''}
+            </span>
+          )}
+        </div>
       </div>
 
       {loading ? (

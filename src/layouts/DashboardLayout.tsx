@@ -3,7 +3,7 @@ import { Outlet, Link, useLocation } from 'react-router-dom';
 import logo from '../assets/images/rapidons-new.png';
 import {
   LayoutDashboard, Users, CreditCard, Truck, Store,
-  Package, ShoppingCart, Tags, LogOut, Zap
+  Package, ShoppingCart, Tags, LogOut, Zap, UserCog, PackageSearch
 } from 'lucide-react';
 
 const links = [
@@ -16,6 +16,8 @@ const links = [
   { name: 'Commandes', path: '/commandes', icon: ShoppingCart },
   { name: 'Commande Express', path: '/commande-express', icon: Zap },
   { name: 'Catégories', path: '/categories', icon: Tags },
+  { name: 'Utilisateurs', path: '/utilisateurs', icon: UserCog },
+  { name: 'Frais de livraison', path: '/frais-livraison', icon: PackageSearch },
 ];
 
 const DashboardLayout = () => {

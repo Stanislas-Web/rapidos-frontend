@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { collection, onSnapshot } from 'firebase/firestore';
 import { db } from '../../firebase/config';
+import * as XLSX from 'xlsx';
 import {
   Users, ShoppingCart, DollarSign, Search, X, Eye,
   Phone, MapPin, Hash, Calendar, Mail, ChevronRight,
-  UserCircle, AlertCircle
+  UserCircle, AlertCircle, Download
 } from 'lucide-react';
 
 type CartItemType = {
@@ -208,9 +209,43 @@ const Clients = () => {
           <h1 className="text-2xl font-extrabold text-gray-900 tracking-tight">Clients</h1>
           <p className="text-sm text-gray-400 mt-0.5">Gérez et suivez vos clients en temps réel</p>
         </div>
-        <div className="flex items-center gap-2 bg-emerald-50 text-emerald-700 px-4 py-2 rounded-xl text-sm font-semibold">
-          <Users className="w-4 h-4" />
-          {filteredClients.length} client{filteredClients.length > 1 ? 's' : ''}
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => {
+              try {
+                const exportData = filteredClients.map(c => ({
+                  'ID': c.id,
+                  'Nom': c.nom,
+                  'Téléphone': c.telephone,
+                  'Pays': c.pays,
+                  'Ville': c.ville,
+                  'Commune': c.commune,
+                  'Quartier': c.quartier,
+                  'Avenue': c.avenue,
+                  'Numéro': c.numero,
+                  'Nombre de commandes': c.nombreCommandes,
+                  'Total dépensé': c.totalDepense,
+                  'Dernière commande': c.derniereCommande ? new Date(c.derniereCommande).toLocaleDateString('fr-FR') : '-',
+                }));
+                const ws = XLSX.utils.json_to_sheet(exportData);
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, 'Clients');
+                const date = new Date().toISOString().split('T')[0];
+                XLSX.writeFile(wb, `clients_${date}.xlsx`);
+              } catch (error) {
+                console.error('Erreur lors de l\'export Excel:', error);
+              }
+            }}
+            disabled={filteredClients.length === 0}
+            className="inline-flex items-center gap-1.5 px-4 py-2 bg-white text-gray-600 rounded-xl text-sm font-medium border border-gray-200 hover:bg-gray-50 hover:border-gray-300 transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            <Download className="w-4 h-4" />
+            Export Excel
+          </button>
+          <div className="flex items-center gap-2 bg-emerald-50 text-emerald-700 px-4 py-2 rounded-xl text-sm font-semibold">
+            <Users className="w-4 h-4" />
+            {filteredClients.length} client{filteredClients.length > 1 ? 's' : ''}
+          </div>
         </div>
       </div>
 

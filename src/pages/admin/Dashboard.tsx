@@ -6,10 +6,11 @@ import {
 import { collection, onSnapshot, orderBy, limit, query } from 'firebase/firestore';
 import { db } from '../../firebase/config';
 import api from '../../utils/api';
+import * as XLSX from 'xlsx';
 import StartCard from '../../components/admin/StartCard';
 import {
   Users, CreditCard, Package, Truck, Store,
-  TrendingUp, ShoppingCart, Calendar, ArrowUpRight
+  TrendingUp, ShoppingCart, Calendar, ArrowUpRight, Download
 } from 'lucide-react';
 
 type CartType = {
@@ -474,11 +475,43 @@ const Dashboard = () => {
                 Suivez vos statistiques et performances en temps réel
               </p>
             </div>
-            <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2.5 rounded-xl border border-white/20">
-              <Calendar className="w-4 h-4 text-white/80" />
-              <span className="text-sm text-white/90 font-medium">
-                {new Date().toLocaleDateString('fr-FR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-              </span>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => {
+                  try {
+                    const exportData = recentOrders.map(order => ({
+                      'ID': order.id,
+                      'Client': order.client,
+                      'Téléphone': order.phone,
+                      'Adresse': order.adresse,
+                      'Commune': order.commune,
+                      'Ville': order.ville,
+                      'Total': order.total,
+                      'Statut': order.status,
+                      'Nombre articles': order.items?.length || 0,
+                      'Date': order.timestamp ? new Date(order.timestamp).toLocaleDateString('fr-FR') : '-',
+                    }));
+                    const ws = XLSX.utils.json_to_sheet(exportData);
+                    const wb = XLSX.utils.book_new();
+                    XLSX.utils.book_append_sheet(wb, ws, 'Commandes récentes');
+                    const date = new Date().toISOString().split('T')[0];
+                    XLSX.writeFile(wb, `dashboard_commandes_${date}.xlsx`);
+                  } catch (error) {
+                    console.error('Erreur lors de l\'export Excel:', error);
+                  }
+                }}
+                disabled={recentOrders.length === 0}
+                className="inline-flex items-center gap-1.5 px-4 py-2.5 bg-white/10 backdrop-blur-sm text-white rounded-xl text-sm font-medium border border-white/20 hover:bg-white/20 transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                <Download className="w-4 h-4" />
+                Export Excel
+              </button>
+              <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2.5 rounded-xl border border-white/20">
+                <Calendar className="w-4 h-4 text-white/80" />
+                <span className="text-sm text-white/90 font-medium">
+                  {new Date().toLocaleDateString('fr-FR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                </span>
+              </div>
             </div>
           </div>
         </div>
