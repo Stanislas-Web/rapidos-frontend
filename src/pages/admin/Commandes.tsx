@@ -40,6 +40,20 @@ type CartType = {
   totalAvecLivraison: number;
   status: string;
   timestamp: Date;
+  livreur?: {
+    id: number;
+    firstName: string;
+    lastName: string;
+    phone: string;
+    email: string;
+  } | null;
+  vendor?: {
+    id: number;
+    firstName: string;
+    lastName: string;
+    phone: string;
+    email: string;
+  } | null;
 };
 
 const Commandes = () => {
@@ -68,7 +82,7 @@ const Commandes = () => {
       // Construire l'URL avec les paramètres
       let url = `/ecommerce/commandes/admin/all?page=${page}&limit=${limit}`;
       if (status && status !== 'all') {
-        url += `&status=${status}`;
+        url += `&status=${encodeURIComponent(status)}`;
       }
 
       const response = await api.get(url);
@@ -108,8 +122,10 @@ const Commandes = () => {
           prixColis: parseFloat(item.prixColis || 0),
           fraisLivraison: parseFloat(item.fraisLivraison || 0),
           totalAvecLivraison: parseFloat(item.totalAvecLivraison || 0),
-          status: item.status || 'pending',
-          timestamp: item.timestamp ? new Date(item.timestamp) : (item.createdAt ? new Date(item.createdAt) : new Date())
+          status: (item.status || 'pending').toLowerCase(),
+          timestamp: item.timestamp ? new Date(item.timestamp) : (item.createdAt ? new Date(item.createdAt) : new Date()),
+          livreur: item.livreur || null,
+          vendor: item.vendor || null
         };
       }) as CartType[];
 
@@ -253,7 +269,7 @@ const Commandes = () => {
         return 'bg-red-100 text-red-800 border-red-200';
       case 'en route pour livraison':
         return 'bg-green-100 text-green-800 border-green-200';
-      case 'prêt à expédier':
+      case 'pret_a_expedier':
         return 'bg-blue-100 text-blue-800 border-blue-200';
       case 'colis en cours de préparation':
         return 'bg-orange-100 text-orange-800 border-orange-200';
@@ -274,7 +290,7 @@ const Commandes = () => {
         return 'Annulée';
       case 'en route pour livraison':
         return 'En route pour livraison';
-      case 'prêt à expédier':
+      case 'pret_a_expedier':
         return 'Prêt à expédier';
       case 'colis en cours de préparation':
         return 'En préparation';
@@ -403,8 +419,8 @@ const Commandes = () => {
           </div>
         </button>
         <button
-          onClick={() => { setStatusFilter(statusFilter === 'prêt à expédier' ? 'all' : 'prêt à expédier'); setCurrentPage(1); }}
-          className={`relative overflow-hidden p-5 rounded-2xl border shadow-sm hover:shadow-md transition-all duration-300 text-left ${statusFilter === 'prêt à expédier' ? 'bg-blue-50 border-blue-300 ring-2 ring-blue-400/30' : 'bg-white border-gray-100'}`}
+          onClick={() => { setStatusFilter(statusFilter === 'pret_a_expedier' ? 'all' : 'pret_a_expedier'); setCurrentPage(1); }}
+          className={`relative overflow-hidden p-5 rounded-2xl border shadow-sm hover:shadow-md transition-all duration-300 text-left ${statusFilter === 'pret_a_expedier' ? 'bg-blue-50 border-blue-300 ring-2 ring-blue-400/30' : 'bg-white border-gray-100'}`}
         >
           <div className="absolute -top-3 -right-3 w-16 h-16 bg-blue-50 rounded-full" />
           <div className="relative flex items-center gap-4">
@@ -414,7 +430,7 @@ const Commandes = () => {
             <div>
               <p className="text-xs font-medium text-gray-400 uppercase tracking-wider">Prêt à expédier</p>
               <p className="text-2xl font-extrabold text-gray-900 mt-0.5">
-                {carts.filter(cart => cart.status === 'prêt à expédier').length}
+                {carts.filter(cart => cart.status === 'pret_a_expedier').length}
               </p>
             </div>
           </div>
@@ -496,7 +512,7 @@ const Commandes = () => {
                 <option value="all">Tous les statuts</option>
                 <option value="pending">En attente</option>
                 <option value="colis en cours de préparation">En préparation</option>
-                <option value="prêt à expédier">Prêt à expédier</option>
+                <option value="pret_a_expedier">Prêt à expédier</option>
                 <option value="en route pour livraison">En route pour livraison</option>
                 <option value="delivered">Livrée</option>
                 <option value="cancelled">Annulée</option>
@@ -875,6 +891,28 @@ const Commandes = () => {
                 </div>
               </div>
 
+              {/* Livreur & Vendeur */}
+              {(selectedCart.livreur || selectedCart.vendor) && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {selectedCart.vendor && (
+                    <div className="bg-gray-50/80 p-3 rounded-xl border border-gray-100">
+                      <p className="text-xs text-gray-400 mb-1">Vendeur</p>
+                      <p className="text-sm font-medium text-gray-700">{selectedCart.vendor.firstName} {selectedCart.vendor.lastName}</p>
+                      <p className="text-xs text-gray-500">{selectedCart.vendor.phone}</p>
+                      <p className="text-xs text-gray-500">{selectedCart.vendor.email}</p>
+                    </div>
+                  )}
+                  {selectedCart.livreur && (
+                    <div className="bg-gray-50/80 p-3 rounded-xl border border-gray-100">
+                      <p className="text-xs text-gray-400 mb-1">Livreur</p>
+                      <p className="text-sm font-medium text-gray-700">{selectedCart.livreur.firstName} {selectedCart.livreur.lastName}</p>
+                      <p className="text-xs text-gray-500">{selectedCart.livreur.phone}</p>
+                      <p className="text-xs text-gray-500">{selectedCart.livreur.email}</p>
+                    </div>
+                  )}
+                </div>
+              )}
+
               {/* Total */}
               <div className="pt-4 border-t border-gray-100 space-y-3">
                 <div className="flex items-center justify-between">
@@ -953,7 +991,7 @@ const Commandes = () => {
                   Répartition par statut
                 </h4>
                 <div className="space-y-2">
-                  {['pending', 'delivered', 'cancelled', 'en route pour livraison', 'prêt à expédier', 'colis en cours de préparation', 'rejected'].map(status => {
+                  {['pending', 'delivered', 'cancelled', 'en route pour livraison', 'pret_a_expedier', 'colis en cours de préparation', 'rejected'].map(status => {
                     const count = filteredCarts.filter(cart => cart.status === status).length;
                     const percentage = filteredCarts.length > 0 ? ((count / filteredCarts.length) * 100).toFixed(1) : '0';
                     return (

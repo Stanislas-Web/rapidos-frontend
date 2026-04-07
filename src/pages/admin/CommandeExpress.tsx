@@ -38,6 +38,20 @@ type CommandeExpressType = {
   totalAvecLivraison: number;
   createdAt: string;
   updatedAt: string;
+  livreur?: {
+    id: number;
+    firstName: string;
+    lastName: string;
+    phone: string;
+    email: string;
+  } | null;
+  vendor?: {
+    id: number;
+    firstName: string;
+    lastName: string;
+    phone: string;
+    email: string;
+  } | null;
 };
 
 type PaginationMeta = {
@@ -821,18 +835,22 @@ const CommandeExpress = () => {
                       <p className="text-xs text-gray-400 mb-0.5">Description du colis</p>
                       <p className="text-sm text-gray-700 leading-relaxed">{selectedCommande.packageDescription || 'N/A'}</p>
                     </div>
-                    {selectedCommande.vendorId && (
+                    {selectedCommande.vendor ? (
                       <div>
-                        <p className="text-xs text-gray-400 mb-0.5">ID Vendeur</p>
-                        <p className="text-sm font-medium text-gray-600">{selectedCommande.vendorId}</p>
+                        <p className="text-xs text-gray-400 mb-0.5">Vendeur</p>
+                        <p className="text-sm font-medium text-gray-700">{selectedCommande.vendor.firstName} {selectedCommande.vendor.lastName}</p>
+                        <p className="text-xs text-gray-500">{selectedCommande.vendor.phone}</p>
+                        <p className="text-xs text-gray-500">{selectedCommande.vendor.email}</p>
                       </div>
-                    )}
-                    {selectedCommande.deliveryPersonId && (
+                    ) : null}
+                    {selectedCommande.livreur ? (
                       <div>
-                        <p className="text-xs text-gray-400 mb-0.5">ID Livreur</p>
-                        <p className="text-sm font-medium text-gray-600">{selectedCommande.deliveryPersonId}</p>
+                        <p className="text-xs text-gray-400 mb-0.5">Livreur</p>
+                        <p className="text-sm font-medium text-gray-700">{selectedCommande.livreur.firstName} {selectedCommande.livreur.lastName}</p>
+                        <p className="text-xs text-gray-500">{selectedCommande.livreur.phone}</p>
+                        <p className="text-xs text-gray-500">{selectedCommande.livreur.email}</p>
                       </div>
-                    )}
+                    ) : null}
                   </div>
                 </div>
               </div>
