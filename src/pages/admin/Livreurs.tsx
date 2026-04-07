@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, onSnapshot } from 'firebase/firestore';
 import { db } from '../../firebase/config';
+import api from '../../utils/api';
 import * as XLSX from 'xlsx';
 import {
   Truck, Users, UserCheck, UserX, Search, X,
   Clock, Calendar, Shield, Edit3, Trash2, Power,
-  AlertCircle, ToggleLeft, ToggleRight, Download
+  AlertCircle, ToggleLeft, ToggleRight, Download, MapPin, Loader2, Save
 } from 'lucide-react';
 
 type StatusType = {
@@ -16,6 +17,10 @@ type StatusType = {
   status: boolean;
   createdAt: Date;
   lastUpdated: Date;
+  // Données enrichies depuis l'API
+  phone?: string;
+  email?: string;
+  communes?: string[];
 };
 
 const Livreurs = () => {
@@ -24,24 +29,33 @@ const Livreurs = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [firebaseData, setFirebaseData] = useState<any[]>([]);
+  const [apiLivreurs, setApiLivreurs] = useState<any[]>([]);
 
+  // Modal communes
+  const [showCommunesModal, setShowCommunesModal] = useState(false);
+  const [modalLivreur, setModalLivreur] = useState<StatusType | null>(null);
+  const [availableCommunes, setAvailableCommunes] = useState<string[]>([]);
+  const [selectedCommunes, setSelectedCommunes] = useState<string[]>([]);
+  const [loadingCommunes, setLoadingCommunes] = useState(false);
+  const [savingCommunes, setSavingCommunes] = useState(false);
+
+  // Chargement Firebase en temps réel
   useEffect(() => {
     const fetchStatusData = async () => {
       try {
         setLoading(true);
         setError(null);
 
-        // Écouter les changements en temps réel
         const unsubscribe = onSnapshot(collection(db, 'status'), (querySnapshot) => {
           const data = querySnapshot.docs.map(doc => ({
             id: doc.id,
             ...doc.data(),
             createdAt: doc.data().createdAt?.toDate() || new Date(),
             lastUpdated: doc.data().lastUpdated?.toDate() || new Date()
-          })) as StatusType[];
-          
-          setStatusData(data);
-          setFilteredData(data);
+          }));
+
+          setFirebaseData(data);
           setLoading(false);
         }, (error) => {
           console.error('Erreur lors de l\'écoute des changements:', error);
@@ -59,6 +73,46 @@ const Livreurs = () => {
 
     fetchStatusData();
   }, []);
+
+  // Chargement API livreurs
+  const fetchApiLivreurs = async () => {
+    try {
+      const response = await api.get('/admin/livreurs');
+      if (response.data?.data) {
+        setApiLivreurs(response.data.data);
+      }
+    } catch (error) {
+      console.error('Erreur lors du chargement des livreurs API:', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchApiLivreurs();
+  }, []);
+
+  // Fusion Firebase + API via userId comme clé commune
+  useEffect(() => {
+    if (firebaseData.length > 0 && apiLivreurs.length > 0) {
+      console.log('[DEBUG] Firebase userIds:', firebaseData.map(d => d.userId));
+      console.log('[DEBUG] API ids:', apiLivreurs.map(l => l.id));
+    }
+    const merged = firebaseData
+      .filter(item => apiLivreurs.some(l => String(l.id) === String(item.userId)))
+      .map(item => {
+        const apiMatch = apiLivreurs.find(l => String(l.id) === String(item.userId));
+        return {
+          ...item,
+          ...(apiMatch ? {
+            phone: apiMatch.phone,
+            email: apiMatch.email,
+            communes: apiMatch.communes,
+          } : {})
+        };
+      }) as StatusType[];
+
+    setStatusData(merged);
+    setFilteredData(merged);
+  }, [firebaseData, apiLivreurs]);
 
   // Filtrer les données basé sur le terme de recherche
   useEffect(() => {
@@ -101,6 +155,52 @@ const Livreurs = () => {
       : 'bg-red-100 text-red-800 border-red-200';
   };
 
+  const openCommunesModal = async (item: StatusType) => {
+    setModalLivreur(item);
+    setSelectedCommunes(item.communes || []);
+    setShowCommunesModal(true);
+    setLoadingCommunes(true);
+    try {
+      const res = await api.get('/admin/communes');
+      const list: any[] = res.data?.communes || [];
+      setAvailableCommunes(list.map((c: any) => c.communeName));
+    } catch {
+      setAvailableCommunes([]);
+    } finally {
+      setLoadingCommunes(false);
+    }
+  };
+
+  const toggleCommune = (name: string) => {
+    setSelectedCommunes(prev =>
+      prev.includes(name) ? prev.filter(c => c !== name) : [...prev, name]
+    );
+  };
+
+  const handleSaveCommunes = async () => {
+    if (!modalLivreur) return;
+    setSavingCommunes(true);
+    try {
+      const url = `/admin/livreurs/${modalLivreur.userId}/communes`;
+      console.log('[PATCH]', url, { communes: selectedCommunes });
+      await api.patch(url, { communes: selectedCommunes });
+      // Mettre à jour Firebase status si le PATCH a réussi
+      if (modalLivreur.id) {
+        await updateDoc(doc(db, 'status', modalLivreur.id), { communes: selectedCommunes });
+      }
+      // Recharger depuis l'API pour avoir les données à jour
+      await fetchApiLivreurs();
+      setShowCommunesModal(false);
+    } catch (err: any) {
+      const status = err.response?.status;
+      const msg = err.response?.data?.message || err.message || 'Erreur inconnue';
+      console.error('[ERREUR PATCH communes]', status, err.response?.data);
+      alert(`Erreur ${status || ''}: ${msg}`);
+    } finally {
+      setSavingCommunes(false);
+    }
+  };
+
   const toggleStatus = async (item: StatusType) => {
     if (!item.id) return;
 
@@ -135,6 +235,7 @@ const Livreurs = () => {
   }
 
   return (
+    <>
     <div className="space-y-6 p-4 md:p-6 max-w-7xl mx-auto">
       {/* En-tête */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -149,6 +250,9 @@ const Livreurs = () => {
                 const exportData = filteredData.map(item => ({
                   'User ID': item.userId,
                   'Nom': item.userName,
+                  'Téléphone': item.phone || '-',
+                  'Email': item.email || '-',
+                  'Communes': item.communes?.join(', ') || '-',
                   'Rôle': item.role,
                   'Statut': item.status ? 'Actif' : 'Inactif',
                   'Date de création': item.createdAt ? formatDate(item.createdAt) : '-',
@@ -296,6 +400,22 @@ const Livreurs = () => {
                       <p className="text-xs text-gray-400 mt-1 font-mono truncate">
                         ID: {item.userId}
                       </p>
+                      {(item.phone || item.email) && (
+                        <p className="text-xs text-gray-400 mt-0.5 truncate">
+                          {item.phone && <span>{item.phone}</span>}
+                          {item.phone && item.email && <span> · </span>}
+                          {item.email && <span>{item.email}</span>}
+                        </p>
+                      )}
+                      {item.communes && item.communes.length > 0 && (
+                        <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
+                          {item.communes.map((commune, i) => (
+                            <span key={i} className="inline-flex items-center px-2 py-0.5 rounded-lg text-[11px] font-medium bg-blue-50 text-blue-600">
+                              {commune}
+                            </span>
+                          ))}
+                        </div>
+                      )}
                       <div className="flex items-center gap-4 mt-2 text-[11px] text-gray-400">
                         <span className="inline-flex items-center gap-1">
                           <Calendar className="w-3 h-3" />
@@ -322,6 +442,14 @@ const Livreurs = () => {
                     >
                       {item.status ? <ToggleRight className="w-3.5 h-3.5" /> : <ToggleLeft className="w-3.5 h-3.5" />}
                       {item.status ? 'Désactiver' : 'Activer'}
+                    </button>
+                    <button
+                      onClick={() => openCommunesModal(item)}
+                      className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-100 hover:border-emerald-200 transition-all duration-200"
+                      title="Assigner des communes"
+                    >
+                      <MapPin className="w-3.5 h-3.5" />
+                      Communes
                     </button>
                     <button
                       className="p-2 rounded-xl text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-all duration-200"
@@ -363,6 +491,71 @@ const Livreurs = () => {
         )}
       </div>
     </div>
+
+      {showCommunesModal && modalLivreur && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <div className="w-9 h-9 bg-emerald-50 rounded-xl flex items-center justify-center">
+                  <MapPin className="w-4 h-4 text-emerald-600" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-gray-900">Communes</h3>
+                  <p className="text-xs text-gray-400">{modalLivreur.userName}</p>
+                </div>
+              </div>
+              <button onClick={() => setShowCommunesModal(false)} className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors">
+                <X className="w-4 h-4 text-gray-400" />
+              </button>
+            </div>
+
+            {loadingCommunes ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="w-6 h-6 text-emerald-500 animate-spin" />
+              </div>
+            ) : availableCommunes.length === 0 ? (
+              <p className="text-sm text-gray-400 text-center py-6">Aucune commune disponible</p>
+            ) : (
+              <div className="space-y-1.5 max-h-64 overflow-y-auto mb-5 pr-1">
+                {availableCommunes.map(name => (
+                  <label key={name} className={`flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all ${
+                    selectedCommunes.includes(name)
+                      ? 'border-emerald-400 bg-emerald-50'
+                      : 'border-gray-100 hover:border-gray-200'
+                  }`}>
+                    <input
+                      type="checkbox"
+                      checked={selectedCommunes.includes(name)}
+                      onChange={() => toggleCommune(name)}
+                      className="accent-emerald-600 w-4 h-4"
+                    />
+                    <span className="text-sm font-medium text-gray-800">{name}</span>
+                  </label>
+                ))}
+              </div>
+            )}
+
+            <div className="flex gap-2">
+              <button
+                onClick={() => setShowCommunesModal(false)}
+                className="flex-1 px-4 py-2.5 border border-gray-200 text-gray-600 rounded-xl text-sm font-medium hover:bg-gray-50 transition-colors"
+              >
+                Annuler
+              </button>
+              <button
+                onClick={handleSaveCommunes}
+                disabled={savingCommunes || loadingCommunes}
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-emerald-600 text-white rounded-xl text-sm font-semibold hover:bg-emerald-700 transition-colors disabled:opacity-60"
+              >
+                {savingCommunes ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                Enregistrer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 };
 
