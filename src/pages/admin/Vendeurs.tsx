@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../../utils/api';
 import * as XLSX from 'xlsx';
-import { Store, Package, UserCheck, Clock, Search, X, Mail, Phone, Calendar, AlertCircle, Hash, BoxIcon, ShoppingBag, Download, Eye } from 'lucide-react';
+import { Store, Package, UserCheck, Clock, Search, X, Mail, Phone, Calendar, AlertCircle, Hash, BoxIcon, ShoppingBag, Download, Eye, Edit3 } from 'lucide-react';
 
 type ProductType = {
   id: number;
@@ -60,6 +60,14 @@ const Vendeurs = () => {
   const [selectedVendeur, setSelectedVendeur] = useState<VendeurWithProductsType | null>(null);
   const [showModal, setShowModal] = useState(false);
 
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editForm, setEditForm] = useState({
+    firstName: '', lastName: '', email: '', phone: '', role: '', userStatus: ''
+  });
+  const [editLoading, setEditLoading] = useState(false);
+  const [editError, setEditError] = useState('');
+  const [editVendeurId, setEditVendeurId] = useState<number | null>(null);
+
   useEffect(() => {
     const fetchVendeurs = async () => {
       setLoading(true);
@@ -111,6 +119,39 @@ const Vendeurs = () => {
     return date.toLocaleDateString('fr-FR');
   };
 
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'active': return 'bg-green-50 text-green-700 border-green-200';
+      case 'inactive': return 'bg-gray-100 text-gray-600 border-gray-200';
+      case 'pending': return 'bg-yellow-50 text-yellow-700 border-yellow-200';
+      case 'banned': return 'bg-red-50 text-red-700 border-red-200';
+      case 'suspended': return 'bg-orange-50 text-orange-700 border-orange-200';
+      default: return 'bg-gray-50 text-gray-700 border-gray-200';
+    }
+  };
+
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case 'active': return 'Actif';
+      case 'inactive': return 'Inactif';
+      case 'pending': return 'En attente';
+      case 'banned': return 'Banni';
+      case 'suspended': return 'Suspendu';
+      default: return status;
+    }
+  };
+
+  const getStatusDotColor = (status: string) => {
+    switch (status) {
+      case 'active': return 'bg-green-500';
+      case 'inactive': return 'bg-gray-400';
+      case 'pending': return 'bg-yellow-500';
+      case 'banned': return 'bg-red-500';
+      case 'suspended': return 'bg-orange-500';
+      default: return 'bg-gray-400';
+    }
+  };
+
   const openModal = (vendeurData: VendeurWithProductsType) => {
     setSelectedVendeur(vendeurData);
     setShowModal(true);
@@ -119,6 +160,37 @@ const Vendeurs = () => {
   const closeModal = () => {
     setShowModal(false);
     setSelectedVendeur(null);
+  };
+
+  const openEditModal = (vendeurData: VendeurWithProductsType) => {
+    setEditVendeurId(vendeurData.vendeur.id);
+    setEditForm({
+      firstName: vendeurData.vendeur.firstName,
+      lastName: vendeurData.vendeur.lastName,
+      email: vendeurData.vendeur.email,
+      phone: vendeurData.vendeur.phone,
+      role: vendeurData.vendeur.role,
+      userStatus: vendeurData.vendeur.userStatus
+    });
+    setEditError('');
+    setShowEditModal(true);
+  };
+
+  const handleEdit = async () => {
+    if (!editVendeurId) return;
+    setEditLoading(true);
+    setEditError('');
+    try {
+      await api.put(`/admin/users/${editVendeurId}`, editForm);
+      setShowEditModal(false);
+      const response = await api.get('/vendeurs');
+      setVendeurs(response.data.vendeurWITHProduct || []);
+      setFilteredVendeurs(response.data.vendeurWITHProduct || []);
+    } catch (err: any) {
+      setEditError(err.response?.data?.message || err.response?.data?.errors?.[0]?.message || 'Erreur lors de la modification');
+    } finally {
+      setEditLoading(false);
+    }
   };
 
   return (
@@ -222,7 +294,7 @@ const Vendeurs = () => {
                 <div>
                   <p className="text-xs font-medium text-gray-400 uppercase tracking-wider">Vendeurs Actifs</p>
                   <p className="text-2xl font-extrabold text-gray-900 mt-0.5">
-                    {filteredVendeurs.filter(v => v.vendeur.userStatus === 'active' || v.vendeur.userStatus === 'pending').length}
+                    {filteredVendeurs.filter(v => v.vendeur.userStatus === 'active').length}
                   </p>
                 </div>
               </div>
@@ -333,16 +405,9 @@ const Vendeurs = () => {
                           </span>
                         </td>
                         <td className="px-6 py-4">
-                          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${
-                            vendeurData.vendeur.userStatus === 'active' || vendeurData.vendeur.userStatus === 'pending'
-                              ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' 
-                              : 'bg-amber-50 text-amber-700 border border-amber-200'
-                          }`}>
-                            <span className={`w-1.5 h-1.5 rounded-full ${
-                              vendeurData.vendeur.userStatus === 'active' || vendeurData.vendeur.userStatus === 'pending'
-                                ? 'bg-emerald-500' : 'bg-amber-500'
-                            }`}></span>
-                            {vendeurData.vendeur.userStatus === 'active' || vendeurData.vendeur.userStatus === 'pending' ? 'Actif' : 'Inactif'}
+                          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border ${getStatusColor(vendeurData.vendeur.userStatus)}`}>
+                            <span className={`w-1.5 h-1.5 rounded-full ${getStatusDotColor(vendeurData.vendeur.userStatus)}`}></span>
+                            {getStatusText(vendeurData.vendeur.userStatus)}
                           </span>
                         </td>
                         <td className="px-6 py-4">
@@ -352,13 +417,22 @@ const Vendeurs = () => {
                           </span>
                         </td>
                         <td className="px-6 py-4">
-                          <button
-                            className="p-2 rounded-xl text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 transition-all duration-200"
-                            onClick={() => openModal(vendeurData)}
-                            title="Voir les détails"
-                          >
-                            <Eye className="w-5 h-5" />
-                          </button>
+                          <div className="flex items-center gap-1">
+                            <button
+                              className="p-2 rounded-xl text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 transition-all duration-200"
+                              onClick={() => openModal(vendeurData)}
+                              title="Voir les détails"
+                            >
+                              <Eye className="w-5 h-5" />
+                            </button>
+                            <button
+                              className="p-2 rounded-xl text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-all duration-200"
+                              onClick={() => openEditModal(vendeurData)}
+                              title="Modifier"
+                            >
+                              <Edit3 className="w-5 h-5" />
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))
@@ -432,12 +506,8 @@ const Vendeurs = () => {
                     </div>
                     <div>
                       <p className="text-xs text-gray-400 mb-0.5">Statut</p>
-                      <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${
-                        selectedVendeur.vendeur.userStatus === 'active' || selectedVendeur.vendeur.userStatus === 'pending'
-                          ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' 
-                          : 'bg-amber-50 text-amber-700 border border-amber-200'
-                      }`}>
-                        {selectedVendeur.vendeur.userStatus === 'active' || selectedVendeur.vendeur.userStatus === 'pending' ? 'Actif' : 'Inactif'}
+                      <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border ${getStatusColor(selectedVendeur.vendeur.userStatus)}`}>
+                        {getStatusText(selectedVendeur.vendeur.userStatus)}
                       </span>
                     </div>
                     <div>
@@ -539,6 +609,83 @@ const Vendeurs = () => {
                 className="px-4 py-2.5 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-colors font-medium text-sm"
               >
                 Fermer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Édition */}
+      {showEditModal && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm overflow-y-auto h-full w-full z-50 flex items-start justify-center pt-10 pb-10">
+          <div className="relative w-11/12 md:w-1/2 lg:w-2/5 bg-white rounded-2xl shadow-2xl max-h-[90vh] flex flex-col">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 flex-shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-blue-50 rounded-xl"><Edit3 className="w-5 h-5 text-blue-600" /></div>
+                <h3 className="text-lg font-bold text-gray-800">Modifier le vendeur</h3>
+              </div>
+              <button onClick={() => setShowEditModal(false)} className="p-2 rounded-xl hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-all">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="overflow-y-auto p-6 space-y-4 flex-1">
+              {editError && (
+                <div className="flex items-center gap-2 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm">
+                  <AlertCircle className="w-4 h-4 flex-shrink-0" /> {editError}
+                </div>
+              )}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 mb-1.5">Prénom</label>
+                  <input type="text" value={editForm.firstName} onChange={e => setEditForm({...editForm, firstName: e.target.value})}
+                    className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500" />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 mb-1.5">Nom</label>
+                  <input type="text" value={editForm.lastName} onChange={e => setEditForm({...editForm, lastName: e.target.value})}
+                    className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500" />
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-500 mb-1.5">Email</label>
+                <input type="email" value={editForm.email} onChange={e => setEditForm({...editForm, email: e.target.value})}
+                  className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500" />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-500 mb-1.5">Téléphone</label>
+                <input type="text" value={editForm.phone} onChange={e => setEditForm({...editForm, phone: e.target.value})}
+                  className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500" />
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 mb-1.5">Rôle</label>
+                  <select value={editForm.role} onChange={e => setEditForm({...editForm, role: e.target.value})}
+                    className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 appearance-none">
+                    <option value="vendeur">Vendeur</option>
+                    <option value="acheteur">Acheteur</option>
+                    <option value="livreur">Livreur</option>
+                    <option value="admin">Admin</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 mb-1.5">Statut</label>
+                  <select value={editForm.userStatus} onChange={e => setEditForm({...editForm, userStatus: e.target.value})}
+                    className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 appearance-none">
+                    <option value="active">Actif</option>
+                    <option value="inactive">Inactif</option>
+                    <option value="pending">En attente</option>
+                    <option value="banned">Banni</option>
+                    <option value="suspended">Suspendu</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center justify-end gap-2 px-6 py-4 border-t border-gray-100 flex-shrink-0 bg-gray-50/50">
+              <button onClick={() => setShowEditModal(false)} className="px-4 py-2.5 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-colors font-medium text-sm">Annuler</button>
+              <button onClick={handleEdit} disabled={editLoading}
+                className="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors font-medium text-sm shadow-sm disabled:opacity-50">
+                {editLoading ? <div className="animate-spin rounded-full h-4 w-4 border-2 border-white/30 border-t-white"></div> : <Edit3 className="w-4 h-4" />}
+                Enregistrer
               </button>
             </div>
           </div>

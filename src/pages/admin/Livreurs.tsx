@@ -205,11 +205,16 @@ const Livreurs = () => {
     if (!item.id) return;
 
     try {
+      const newStatus = !item.status;
+      const newUserStatus = newStatus ? 'active' : 'inactive';
+
       const docRef = doc(db, 'status', item.id);
       await updateDoc(docRef, {
-        status: !item.status,
+        status: newStatus,
         lastUpdated: new Date()
       });
+
+      await api.patch(`/admin/users/${item.userId}/status`, { userStatus: newUserStatus });
     } catch (error) {
       console.error('Erreur lors du changement de statut:', error);
       alert('Erreur lors du changement de statut');
