@@ -17,6 +17,8 @@ type UserType = {
   phone: string;
   role: string;
   userStatus: string;
+  secureOtp?: number | null;
+  otp?: number | null;
   latitude?: string | null;
   longitude?: string | null;
   termsAccepted?: boolean;
@@ -119,6 +121,10 @@ const Utilisateurs = () => {
     return date.toLocaleDateString('fr-FR', {
       year: 'numeric', month: 'short', day: 'numeric'
     });
+  };
+
+  const formatOtp = (user: UserType) => {
+    return user.secureOtp ?? user.otp ?? '-';
   };
 
   const getRoleColor = (role: string) => {
@@ -266,6 +272,7 @@ const Utilisateurs = () => {
         'Nom': u.lastName,
         'Email': u.email,
         'Téléphone': u.phone,
+        'OTP': formatOtp(u),
         'Rôle': getRoleText(u.role),
         'Statut': getStatusText(u.userStatus),
         'Date de création': formatDate(u.createdAt),
@@ -476,6 +483,7 @@ const Utilisateurs = () => {
                     <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Utilisateur</th>
                     <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Contact</th>
                     <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Rôle</th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">OTP</th>
                     <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Statut</th>
                     <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Date</th>
                     <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
@@ -516,6 +524,9 @@ const Utilisateurs = () => {
                           </span>
                         </td>
                         <td className="px-6 py-4">
+                          <span className="text-sm font-medium text-gray-700">{formatOtp(user)}</span>
+                        </td>
+                        <td className="px-6 py-4">
                           <span className={`inline-flex items-center px-2.5 py-1 text-xs font-semibold rounded-full border ${getStatusColor(user.userStatus)}`}>
                             {getStatusText(user.userStatus)}
                           </span>
@@ -546,7 +557,7 @@ const Utilisateurs = () => {
                     ))
                   ) : (
                     <tr>
-                      <td colSpan={6} className="px-6 py-12 text-center">
+                      <td colSpan={7} className="px-6 py-12 text-center">
                         <div className="w-14 h-14 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-3">
                           <Search className="w-6 h-6 text-gray-400" />
                         </div>
@@ -630,6 +641,10 @@ const Utilisateurs = () => {
                       <p className="text-sm font-medium text-gray-700 flex items-center gap-1.5">
                         <Phone className="w-3.5 h-3.5 text-gray-400" /> {selectedUser.phone}
                       </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-400 mb-0.5">OTP</p>
+                      <p className="text-sm font-medium text-gray-700">{formatOtp(selectedUser)}</p>
                     </div>
                     <div>
                       <p className="text-xs text-gray-400 mb-1">Rôle</p>
